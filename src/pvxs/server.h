@@ -150,7 +150,7 @@ PVXS_API
 std::ostream& operator<<(std::ostream& strm, const Server& serv);
 
 //! Configuration for a Server
-struct PVXS_API Config {
+struct PVXS_API Config : public impl::ConfigCommon {
     //! List of network interface addresses (**not** host names) to which this server will bind.
     //! interfaces.empty() treated as an alias for "0.0.0.0", which may also be given explicitly.
     //! Port numbers are optional and unused (parsed and ignored)
@@ -164,16 +164,8 @@ struct PVXS_API Config {
     //! May include broadcast and/or unicast addresses.
     //! Supplemented only if auto_beacon==true
     std::vector<std::string> beaconDestinations;
-    //! TCP port to bind.  Default is 5075.  May be zero.
-    unsigned short tcp_port = 5075;
-    //! UDP port to bind.  Default is 5076.  May be zero, cf. Server::config() to find allocated port.
-    unsigned short udp_port = 5076;
     //! Whether to populate the beacon address list automatically.  (recommended)
     bool auto_beacon = true;
-
-    //! Inactivity timeout interval for TCP connections.  (seconds)
-    //! @since 0.2.0
-    double tcpTimeout = 40.0;
 
     //! Server unique ID.  Only meaningful in readback via Server::config()
     ServerGUID guid{};

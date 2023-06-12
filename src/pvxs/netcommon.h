@@ -74,7 +74,20 @@ struct PVXS_API ReportInfo {
     virtual ~ReportInfo();
 };
 
-#endif
+#endif // PVXS_EXPERT_API_ENABLED
+
+struct PVXS_API ConfigCommon {
+    virtual ~ConfigCommon() =0;
+
+    //! TCP port to bind.  Default is 5075.  May be zero.
+    unsigned short tcp_port = 5075;
+    //! UDP port to bind.  Default is 5076.  May be zero, cf. Server::config() to find allocated port.
+    unsigned short udp_port = 5076;
+
+    //! Inactivity timeout interval for TCP connections.  (seconds)
+    //! @since 0.2.0
+    double tcpTimeout = 40.0;
+};
 
 } // namespace impl
 } // namespace pvxs

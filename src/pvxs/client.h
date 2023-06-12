@@ -1002,7 +1002,7 @@ public:
 };
 DiscoverBuilder Context::discover(std::function<void (const Discovered &)> && fn) { return DiscoverBuilder(pvt, std::move(fn)); }
 
-struct PVXS_API Config {
+struct PVXS_API Config : public impl::ConfigCommon {
     /** List of unicast, multicast, and broadcast addresses to which search requests will be sent.
      *
      * Entries may take the forms:
@@ -1021,18 +1021,8 @@ struct PVXS_API Config {
     //! @since 0.2.0
     std::vector<std::string> nameServers;
 
-    //! UDP port to bind.  Default is 5076.  May be zero, cf. Server::config() to find allocated port.
-    unsigned short udp_port = 5076;
-    //! Default TCP port for name servers
-    //! @since 0.2.0
-    unsigned short tcp_port = 5075;
-
     //! Whether to extend the addressList with local interface broadcast addresses.  (recommended)
     bool autoAddrList = true;
-
-    //! Inactivity timeout interval for TCP connections.  (seconds)
-    //! @since 0.2.0
-    double tcpTimeout = 40.0;
 
 private:
     bool BE = EPICS_BYTE_ORDER==EPICS_ENDIAN_BIG;

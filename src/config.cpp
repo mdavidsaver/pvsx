@@ -29,6 +29,9 @@ DEFINE_LOGGER(config, "pvxs.config");
 
 namespace pvxs {
 
+namespace impl {
+ConfigCommon::~ConfigCommon() {}
+} // namespace impl
 SockEndpoint::SockEndpoint(const char* ep, uint16_t defport)
 {
     // <IP46>
