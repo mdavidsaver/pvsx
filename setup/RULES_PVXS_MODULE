@@ -11,7 +11,7 @@ endif
 
 _PVXS_CHECK_VARS := PROD TESTPROD LIB $(PROD) $(TESTPROD) $(LIBRARY)
 
-ifeq (,$(LIBEVENT))
+ifeq (,$(LIBEVENT_PREFIX))
 # libevent in default search path
 
 # $(1) is PROD or LIBRARY name

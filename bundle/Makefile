@@ -1,5 +1,7 @@
 TOP=..
 
+_PVXS_BOOTSTRAP = YES
+
 include $(TOP)/configure/CONFIG
 
 CMAKE ?= cmake

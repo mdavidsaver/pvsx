@@ -1,7 +1,7 @@
 #ifdef _COMMENT_
 /* Compiler inspection
  *
- * expanded as configure/CONFIG_SITE.Common.*
+ * expanded as configure/O.*/TOOLCHAIN
  */
 /* GCC preprocessor drops C comments from output.
  * MSVC preprocessor emits C comments in output

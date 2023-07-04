@@ -1,0 +1,40 @@
+# auto-compute location of this file.
+# avoid need to standardize configure/RELEASE name
+_PVXS := $(dir $(lastword $(MAKEFILE_LIST)))
+
+# we're appending so must be idempotent
+ifeq (,$(_PVXS_CONF_INCLUDED))
+_PVXS_CONF_INCLUDED := YES
+
+ifdef T_A
+
+ifneq (YES,$(_PVXS_BOOTSTRAP))
+include $(_PVXS)/TOOLCHAIN_PVXS.$(T_A)
+endif
+
+# from generated cfg/TOOLCHAIN_PVXS.$(T_A)
+LIBEVENT_PREFIX = $(LIBEVENT_PREFIX_$(T_A))
+LIBEVENT_BUNDLE_LIBS = $(LIBEVENT_BUNDLE_LIBS_$(T_A))
+LIBEVENT_SYS_LIBS = $(LIBEVENT_SYS_LIBS_$(T_A))
+
+# apply to include search paths
+INCLUDES += $(if $(LIBEVENT_PREFIX),-I$(LIBEVENT_PREFIX)/include)
+
+LIBEVENT_BUNDLE_LDFLAGS__RPATH=-Wl,-rpath,$(LIBEVENT_PREFIX)/lib
+LIBEVENT_BUNDLE_LDFLAGS_Darwin_NO = $(if $(LIBEVENT_PREFIX),$(LIBEVENT_BUNDLE_LDFLAGS__RPATH))
+LIBEVENT_BUNDLE_LDFLAGS += $(LIBEVENT_BUNDLE_LDFLAGS_$(OS_CLASS)_$(STATIC_BUILD))
+
+event_core_DIR = $(LIBEVENT_PREFIX)/lib
+event_openssl_DIR = $(LIBEVENT_PREFIX)/lib
+event_pthreads_DIR = $(LIBEVENT_PREFIX)/lib
+
+OPENSSL_PREFIX = $(OPENSSL_PREFIX_$(T_A))
+
+INCLUDES += $(if $(OPENSSL_PREFIX),-I$(OPENSSL_PREFIX)/include)
+USR_LDFLAGS += $(if $(OPENSSL_PREFIX),-L$(OPENSSL_PREFIX)/lib)
+
+endif # T_A
+
+endif # _PVXS_CONF_INCLUDED
+
+# logic continues in RULES_PVXS_MODULE
