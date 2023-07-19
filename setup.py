@@ -240,6 +240,7 @@ class Expand(Command):
                 'mmap64',
                 'pipe',
                 'pipe2',
+                'pread',
                 'poll',
                 'port_create',
                 'sendfile',
