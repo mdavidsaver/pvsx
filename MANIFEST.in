@@ -4,6 +4,7 @@ include LICENSE
 include README.md
 
 include configure/CONFIG_PVXS_VERSION
+include configure/probe-openssl.c
 include src/*.h
 include src/*.h@
 include src/*.cpp
