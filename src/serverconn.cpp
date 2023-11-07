@@ -26,22 +26,27 @@ DEFINE_INST_COUNTER(ServerChan);
 DEFINE_INST_COUNTER(ServerConn);
 DEFINE_INST_COUNTER(ServerSource);
 }
-namespace server {
 
-DEFINE_INST_COUNTER2(Server::Pvt, ServerPvt);
-
-std::set<std::string> ClientCredentials::roles() const
+std::set<std::string> PeerCredentials::roles() const
 {
     std::set<std::string> ret;
     osdGetRoles(account, ret);
     return ret;
 }
 
-std::ostream& operator<<(std::ostream& strm, const ClientCredentials& cred)
+std::ostream& operator<<(std::ostream& strm, const PeerCredentials& cred)
 {
-    strm<<cred.method<<"/"<<cred.account<<"@"<<cred.peer;
+    strm<<cred.method;
+    if(!cred.authority.empty())
+        strm<<cred.authority;
+    strm<<"/"<<cred.account<<"@"<<cred.peer;
     return strm;
 }
+
+namespace server {
+
+DEFINE_INST_COUNTER2(Server::Pvt, ServerPvt);
+
 }} // namespace pvxs::server
 
 namespace pvxs {namespace impl {
@@ -55,13 +60,15 @@ DEFINE_LOGGER(remote, "pvxs.remote.log");
 
 ServerConn::ServerConn(ServIface* iface, evutil_socket_t sock, struct sockaddr *peer, int socklen)
     :ConnBase(false, iface->server->effective.sendBE(),
-              bufferevent_socket_new(iface->server->acceptor_loop.base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS),
+              evbufferevent(__FILE__, __LINE__,
+                bufferevent_socket_new(iface->server->acceptor_loop.base, sock, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS)
+              ),
               SockAddr(peer))
     ,iface(iface)
     ,tcp_tx_limit(evsocket::get_buffer_size(sock, true) * tcp_tx_limit_mult)
 {
-    log_debug_printf(connio, "Client %s connects, RX readahead %zu TX limit %zu\n",
-                     peerName.c_str(), readahead, tcp_tx_limit);
+    log_debug_printf(connio, "Client %s connects%s, RX readahead %zu TX limit %zu\n",
+                     peerName.c_str(), iface->isTLS ? " TLS" : "", readahead, tcp_tx_limit);
     {
         int opt = 1;
         if(setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)&opt, sizeof(opt))<0) {
@@ -70,6 +77,28 @@ ServerConn::ServerConn(ServIface* iface, evutil_socket_t sock, struct sockaddr *
         }
     }
 
+#ifdef PVXS_ENABLE_OPENSSL
+    if(iface->isTLS) {
+        assert(iface->server->tls_context);
+        auto ctx(SSL_new(iface->server->tls_context.ctx));
+        if(!ctx)
+            throw ossl::SSLError("SSL_new()");
+        auto rawconn = bev.release();
+        // BEV_OPT_CLOSE_ON_FREE will free on error
+        evbufferevent tlsconn(__FILE__, __LINE__,
+                              bufferevent_openssl_filter_new(iface->server->acceptor_loop.base,
+                                                             rawconn,
+                                                             ctx,
+                                                             BUFFEREVENT_SSL_ACCEPTING,
+                                                             BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS));
+        bev = std::move(tlsconn);
+
+        // added with libevent 2.2.1-alpha
+        //(void)bufferevent_ssl_set_flags(bev.get(), BUFFEREVENT_SSL_DIRTY_SHUTDOWN);
+        // deprecated, but not yet removed
+        bufferevent_openssl_set_allow_dirty_shutdown(bev.get(), 1);
+    }
+#endif
     {
         auto cred(std::make_shared<server::ClientCredentials>());
         cred->peer = peerName;
@@ -106,9 +135,11 @@ ServerConn::ServerConn(ServIface* iface, evutil_socket_t sock, struct sockaddr *
          * Old pvAccess* was missing a "break" when looping,
          * so it took the last known plugin.
          */
-        to_wire(M, Size{2});
+        to_wire(M, Size{iface->isTLS ? 3u : 2u});
         to_wire(M, "anonymous");
         to_wire(M, "ca");
+        if(iface->isTLS)
+            to_wire(M, "x509");
         auto bend = M.save();
 
         FixedBuf H(sendBE, save, 8);
@@ -199,6 +230,7 @@ void ServerConn::handle_CONNECTION_VALIDATION()
                        std::string(SB()<<auth).c_str());
 
             auto C(std::make_shared<server::ClientCredentials>(*cred));
+            C->isTLS = iface->isTLS;
 
             if(selected=="ca") {
                 auth["user"].as<std::string>([&C, &selected](const std::string& user) {
@@ -206,6 +238,13 @@ void ServerConn::handle_CONNECTION_VALIDATION()
                     C->account = user;
                 });
             }
+#ifdef PVXS_ENABLE_OPENSSL
+            else if(iface->isTLS && selected=="x509" && bev) {
+                auto ctx = bufferevent_openssl_get_ssl(bev.get());
+                assert(ctx);
+                ossl::SSLContext::fill_credentials(*C, ctx);
+            }
+#endif
             if(C->method.empty()) {
                 C->account = C->method = "anonymous";
             }
@@ -215,13 +254,14 @@ void ServerConn::handle_CONNECTION_VALIDATION()
         }
     }
 
-    if(selected!="ca" && selected!="anonymous") {
+    if(selected!="ca" && selected!="anonymous" && selected!="x509") {
         log_debug_printf(connsetup, "Client %s selects unadvertised auth \"%s\"", peerName.c_str(), selected.c_str());
         auth_complete(this, Status{Status::Error, "Client selects unadvertised auth"});
         return;
 
     } else {
-        log_debug_printf(connsetup, "Client %s selects auth \"%s\"\n", peerName.c_str(), selected.c_str());
+        log_debug_printf(connsetup, "Client %s selects auth \"%s\" as \"%s\"\n",
+                         peerName.c_str(), cred->method.c_str(), cred->account.c_str());
     }
 
     // remainder of segBuf is payload w/ credentials
@@ -361,6 +401,19 @@ void ServerConn::cleanup()
     }
 }
 
+void ServerConn::bevEvent(short events)
+{
+#ifdef PVXS_ENABLE_OPENSSL
+    if((events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) && iface->isTLS && bev) {
+        while(auto err = bufferevent_get_openssl_error(bev.get())) {
+            log_err_printf(connio, "TLS Error (0x%lx) %s\n",
+                           err, ERR_reason_error_string(err));
+        }
+    }
+#endif
+    ConnBase::bevEvent(events);
+}
+
 void ServerConn::bevRead()
 {
     ConnBase::bevRead();
@@ -401,8 +454,9 @@ void ServerConn::bevWrite()
 }
 
 
-ServIface::ServIface(const SockAddr &addr, server::Server::Pvt *server, bool fallback)
+ServIface::ServIface(const SockAddr &addr, server::Server::Pvt *server, bool fallback, bool isTLS)
     :server(server)
+    ,isTLS(isTLS)
     ,bind_addr(addr)
 {
     server->acceptor_loop.assertInLoop();

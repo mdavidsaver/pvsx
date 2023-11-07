@@ -57,7 +57,7 @@ SockEndpoint parseEP(const char* optarg, const server::Config& conf)
 {
     SockEndpoint ep;
     try {
-        ep = SockEndpoint(optarg, conf.udp_port);
+        ep = SockEndpoint(optarg, nullptr, conf.udp_port);
 
     }catch(std::exception& e){
         std::cerr<<"Error: Invalid group spec. '"<<escape(optarg)<<"' : "<<e.what()<<std::endl;
@@ -110,8 +110,12 @@ struct App {
         size_t nproto = msg.otherproto.size();
         if(msg.protoTCP)
             nproto++;
+        if(msg.protoTLS)
+            nproto++;
 
         to_wire(buf, Size{nproto});
+        if(msg.protoTLS)
+            to_wire(buf, "tls");
         if(msg.protoTCP)
             to_wire(buf, "tcp");
         for(auto& prot : msg.otherproto) {

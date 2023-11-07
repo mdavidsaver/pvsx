@@ -137,6 +137,11 @@ std::ostream& version_information(std::ostream& strm)
     strm<<version_str()<<"\n";
     strm<<EPICS_VERSION_STRING<<"\n";
     strm<<"libevent "<<event_get_version()<<"\n";
+#ifdef PVXS_ENABLE_OPENSSL
+    strm<<OPENSSL_VERSION_TEXT<<"\n";
+#else
+    strm<<"OpenSSL not enabled\n";
+#endif
     return strm;
 }
 

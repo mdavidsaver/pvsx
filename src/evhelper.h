@@ -19,12 +19,19 @@
 #include <event2/listener.h>
 #include <event2/bufferevent.h>
 
+#ifdef PVXS_ENABLE_OPENSSL
+#  include <event2/bufferevent_ssl.h>
+#endif
+
 #include <pvxs/version.h>
 #include <utilpvt.h>
 
 #include <epicsTime.h>
 
 #include "pvaproto.h"
+#ifdef PVXS_ENABLE_OPENSSL
+#  include "ossl.h"
+#endif
 
 // hooks for std::unique_ptr
 namespace std {

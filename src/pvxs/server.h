@@ -91,7 +91,17 @@ public:
     //! Queue a request to break run()
     Server& interrupt();
 
+    /** Apply (in part) updated configuration
+     *
+     * Currently, only updates TLS configuration.  Causes all in-progress
+     * Operations to be disconnected.
+     *
+     * @since UNRELEASED
+     */
+    void reconfigure(const Config&);
+
     //! effective config
+    //! @since UNRELEASED Reference invalidated by a call to reconfigure()
     const Config& config() const;
 
     //! Create a client configuration which can communicate with this Server.

@@ -18,44 +18,22 @@
 #include <pvxs/version.h>
 #include <pvxs/util.h>
 #include <pvxs/data.h>
+#include <pvxs/netcommon.h>
 
 namespace pvxs {
 namespace server {
 
 /** Credentials presented by a client.
  *
- * Primarily a way of presenting peer address and a remote user account name.
- * The method gives the authentication sub-protocol used and is presently one of:
- *
- * - "ca" - Client provided account name.
- * - "anonymous" - Client provided no credentials.  account will also be "anonymous".
+ * See pvxs::PeerCredentials
  *
  * @since 0.2.0
+ * @since UNRELEASED Add PeerCredentials base class
  */
-struct PVXS_API ClientCredentials {
-    //! Peer address (eg. numeric IPv4)
-    std::string peer;
-    //! The local interface address (eg. numeric IPv4) through which this client is connected.
-    //! May be a wildcard address (eg. 0.0.0.0) if the receiving socket is so bound.
-    std::string iface;
-    //! Authentication "method"
-    std::string method;
-    //! Remote user account name.  Meaning depends upon method.
-    std::string account;
+struct ClientCredentials : public PeerCredentials {
     //! (Copy of) Credentials blob as presented by the client.
     Value raw;
-    /** Lookup (locally) roles associated with the account.
-     *
-     * On *nix targets this is the list of primary and secondary groups
-     * in with the account is a member.
-     * On Windows targets this returns the list of local groups for the account.
-     * On other targets, an empty list is returned.
-     */
-    std::set<std::string> roles() const;
 };
-
-PVXS_API
-std::ostream& operator<<(std::ostream&, const ClientCredentials&);
 
 //! Base for all operation classes
 struct PVXS_API OpBase {

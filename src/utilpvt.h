@@ -26,6 +26,8 @@
 #include <type_traits>
 #include <limits>
 
+#include <stdio.h>
+
 #include <event2/util.h>
 
 #include <compilerDependencies.h>
@@ -47,6 +49,14 @@
 #endif
 
 #include <epicsThread.h>
+
+// hooks for std::unique_ptr
+namespace std {
+template<>
+struct default_delete<FILE> {
+    inline void operator()(FILE* fp) { if(fp) fclose(fp); }
+};
+}
 
 namespace pvxs {namespace impl {
 

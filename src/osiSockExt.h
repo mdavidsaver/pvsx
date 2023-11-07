@@ -26,6 +26,9 @@
 #endif
 
 namespace pvxs {
+namespace impl {
+struct ConfigCommon;
+} // namespace impl
 
 PVXS_API
 void osiSockAttachExt();
@@ -142,10 +145,15 @@ struct PVXS_API SockEndpoint {
     // if mcast, then output TTL and interface
     int ttl=-1;
     std::string iface;
+    enum ep_t : uint8_t {
+        Plain, // "classic" PVA in the clear
+        TLS,   // PVA over TLS
+    } scheme = Plain;
 
     SockEndpoint() = default;
-    SockEndpoint(const char* ep, uint16_t defport=0);
-    SockEndpoint(const std::string& ep, uint16_t defport=0) :SockEndpoint(ep.c_str(), defport) {}
+    SockEndpoint(const char* ep, const impl::ConfigCommon *conf = nullptr, uint16_t defport=0);
+    SockEndpoint(const std::string& ep, const impl::ConfigCommon *conf = nullptr, uint16_t defport=0)
+        :SockEndpoint(ep.c_str(), conf, defport) {}
     explicit SockEndpoint(const SockAddr& addr) :addr(addr) {}
 
     MCastMembership resolve() const;

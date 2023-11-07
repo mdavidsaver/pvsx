@@ -26,7 +26,7 @@ namespace impl {
 static
 constexpr size_t tcp_readahead_mult = 2u;
 
-ConnBase::ConnBase(bool isClient, bool sendBE, bufferevent* bev, const SockAddr& peerAddr)
+ConnBase::ConnBase(bool isClient, bool sendBE, evbufferevent&& bev, const SockAddr& peerAddr)
     :peerAddr(peerAddr)
     ,peerName(peerAddr.tostring())
     ,isClient(isClient)
@@ -40,8 +40,7 @@ ConnBase::ConnBase(bool isClient, bool sendBE, bufferevent* bev, const SockAddr&
     ,state(Holdoff)
 {
     if(bev) { // true for server connection.  client will call connect() shortly
-        decltype(this->bev) temp(__FILE__, __LINE__, bev);
-        connect(std::move(temp));
+        connect(std::move(bev));
     }
 }
 
@@ -52,7 +51,7 @@ const char* ConnBase::peerLabel() const
     return isClient ? "Server" : "Client";
 }
 
-void ConnBase::connect(ev_owned_ptr<bufferevent> &&bev)
+void ConnBase::connect(evbufferevent&& bev)
 {
     if(!bev)
         throw BAD_ALLOC();
