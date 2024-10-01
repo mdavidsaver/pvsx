@@ -299,3 +299,55 @@ jobs:
       with:
         name: tapfiles ${{ matrix.name }}
         path: '**/O.*/*.tap'
+
+  meson:
+    name: ${{ matrix.name }} Meson
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      BASE: add-toEpicsArch
+      BASE_REPOOWNER: minijackson
+      LIBEVENT_TAG: ${{ matrix.libevent }}
+      VV: "1"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Native Linux
+            os: ubuntu-22.04
+            cmp: gcc
+            configuration: default
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: true
+    - name: "apt-get install"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install meson cmake
+      if: runner.os == 'Linux'
+    - name: Automatic core dumper analysis
+      uses: mdavidsaver/ci-core-dumper@master
+    - name: Prepare and compile dependencies
+      run: python .ci/cue.py prepare
+    - name: Build libevent
+      run: python .ci/cue.py exec python .ci-local/libevent.py
+    - name: Build Main module
+      run: |
+        python .ci/cue.py \
+          --add-path '{EPICS_BASE}/bin/{EPICS_HOST_ARCH}' \
+          --add-env 'PKG_CONFIG_PATH={EPICS_BASE}/lib/pkgconfig' \
+          --add-env 'PKG_CONFIG_PATH={PWD}/bundle/usr/{EPICS_HOST_ARCH}/lib/pkgconfig' \
+          exec meson setup build --buildtype=release --prefix="${PWD}/output" --libdir lib
+        ninja -C build -vv install
+    - name: Host info
+      run: |
+        python .ci/cue.py \
+          --add-env 'LD_LIBRARY_PATH={PWD}/output/lib/{EPICS_HOST_ARCH}' \
+          --add-env 'LD_LIBRARY_PATH={PWD}/bundle/usr/{EPICS_HOST_ARCH}/lib' \
+          exec ./output/bin/*/pvxinfo -D
+    - name: Run main module tests
+      run: cd build && meson test

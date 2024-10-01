@@ -1,0 +1,1 @@
+option('epics_install_hierarchy', type : 'boolean', value : true)
