@@ -118,12 +118,6 @@ jobs:
             configuration: default
             base: "3.15"
 
-          - name: Native Linux with 3.14
-            os: ubuntu-latest
-            cmp: gcc
-            configuration: default
-            base: "3.14"
-
           - name: OSX
             os: macos-latest
             cmp: clang

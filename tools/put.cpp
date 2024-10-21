@@ -9,13 +9,18 @@
 #include <atomic>
 
 #include <epicsVersion.h>
-#include <epicsGetopt.h>
 #include <epicsThread.h>
 
 #include <pvxs/client.h>
 #include <pvxs/log.h>
+#include <pvxs/json.h>
 #include "utilpvt.h"
 #include "evhelper.h"
+#include "cliutil.h"
+
+#ifndef REALMAIN
+#  define REALMAIN main
+#endif
 
 using namespace pvxs;
 
@@ -34,9 +39,9 @@ void usage(const char* argv0)
                ;
 }
 
-}
+} // namespace
 
-int main(int argc, char *argv[])
+int REALMAIN(int argc, char *argv[])
 {
     try {
         logger_config_env(); // from $PVXS_LOG
@@ -44,54 +49,53 @@ int main(int argc, char *argv[])
         bool verbose = false;
         std::string request;
 
-        {
-            int opt;
-            while ((opt = getopt(argc, argv, "hvVdw:r:")) != -1) {
-                switch(opt) {
-                case 'h':
-                    usage(argv[0]);
-                    return 0;
-                case 'V':
-                    std::cout<<pvxs::version_information;
-                    return 0;
-                case 'v':
-                    verbose = true;
-                    break;
-                case 'd':
-                    logger_level_set("pvxs.*", Level::Debug);
-                    break;
-                case 'w':
-                    timeout = parseTo<double>(optarg);
-                    break;
-                case 'r':
-                    request = optarg;
-                    break;
-                default:
-                    usage(argv[0]);
-                    std::cerr<<"\nUnknown argument: "<<char(opt)<<std::endl;
-                    return 1;
-                }
+        GetOpt opts(argc, argv, "hvVdw:r:");
+        for(auto& pair : opts.arguments) {
+            switch(pair.first) {
+            case 'h':
+                usage(opts.argv0);
+                return 0;
+            case 'V':
+                std::cout<<pvxs::version_information;
+                return 0;
+            case 'v':
+                verbose = true;
+                break;
+            case 'd':
+                logger_level_set("pvxs.*", Level::Debug);
+                break;
+            case 'w':
+                timeout = pair.second.as<double>();
+                break;
+            case 'r':
+                request = *pair.second;
+                break;
+            default:
+                usage(opts.argv0);
+                std::cerr<<"\nUnknown argument: "<<pair.first<<std::endl;
+                return 1;
             }
         }
 
-        if(optind==argc) {
-            usage(argv[0]);
-            std::cerr<<"\nExpected PV name\n";
+        if(opts.positional.size()<2) {
+            usage(opts.argv0);
+            std::cerr<<"\nExpected PV name and at least one value\n";
             return 1;
         }
 
-        std::string pvname(argv[optind++]);
+        const auto& pvname = opts.positional.front();
         std::map<std::string, std::string> values;
 
-        if(argc-optind==1 && std::string(argv[optind]).find_first_of('=')==std::string::npos) {
+        if(opts.positional.size()==2 && std::string(opts.positional[1]).find_first_of('=')==std::string::npos) {
             // only one field assignment, and field name omitted.
-            // implies .value
+            // if JSON map, treat as entire struct.  Others imply .value
 
-            values["value"] = argv[optind];
+            const auto& sval = opts.positional[1];
+            values[sval[0]=='{' ? "" : "value"] = sval;
 
         } else {
-            for(auto n : range(optind, argc)) {
-                std::string fv(argv[n]);
+            for(auto n : range(size_t(1), opts.positional.size())) {
+                std::string fv(opts.positional[n]);
                 auto sep = fv.find_first_of('=');
 
                 if(sep==std::string::npos) {
@@ -118,9 +122,18 @@ int main(int argc, char *argv[])
                     auto val = std::move(prototype);
                     for(auto& pair : values) {
                         try{
-                            val[pair.first] = pair.second;
-                        }catch(NoConvert& e){
-                            throw std::runtime_error(SB()<<"Unable to assign "<<pair.first<<" from \""<<escape(pair.second)<<"\"");
+                            auto fld(val);
+                            if(!pair.first.empty())
+                                fld = val.lookup(pair.first);
+                            auto& sv(pair.second);
+                            if(!sv.empty() && (sv[0]=='{' || sv[0]=='[' || sv[0]=='"'))
+                                json::Parse(pair.second).into(fld);
+                            else
+                                fld.from(sv);
+                        }catch(std::exception& e){
+                            throw std::runtime_error(SB()<<"Unable to assign "<<pair.first
+                                                     <<" from \""<<escape(pair.second)<<"\""
+                                                     <<" : "<<e.what());
                         }
                     }
                     return val;

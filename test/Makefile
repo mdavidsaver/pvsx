@@ -55,6 +55,10 @@ TESTPROD_HOST += testdata
 testdata_SRCS += testdata.cpp
 TESTS += testdata
 
+TESTPROD_HOST += testjson
+testjson_SRCS += testjson.cpp
+TESTS += testjson
+
 TESTPROD_HOST += testnt
 testnt_SRCS += testnt.cpp
 TESTS += testnt
