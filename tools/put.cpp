@@ -14,6 +14,7 @@
 
 #include <pvxs/client.h>
 #include <pvxs/log.h>
+#include <pvxs/json.h>
 #include "utilpvt.h"
 #include "evhelper.h"
 
@@ -85,9 +86,10 @@ int main(int argc, char *argv[])
 
         if(argc-optind==1 && std::string(argv[optind]).find_first_of('=')==std::string::npos) {
             // only one field assignment, and field name omitted.
-            // implies .value
+            // if JSON map, treat as entire struct.  Others imply .value
 
-            values["value"] = argv[optind];
+            auto sval(argv[optind]);
+            values[sval[0]=='{' ? "" : "value"] = sval;
 
         } else {
             for(auto n : range(optind, argc)) {
@@ -118,9 +120,18 @@ int main(int argc, char *argv[])
                     auto val = std::move(prototype);
                     for(auto& pair : values) {
                         try{
-                            val[pair.first] = pair.second;
-                        }catch(NoConvert& e){
-                            throw std::runtime_error(SB()<<"Unable to assign "<<pair.first<<" from \""<<escape(pair.second)<<"\"");
+                            auto fld(val);
+                            if(!pair.first.empty())
+                                fld = val.lookup(pair.first);
+                            auto& sv(pair.second);
+                            if(!sv.empty() && (sv[0]=='{' || sv[0]=='[' || sv[0]=='"'))
+                                json::Parse(pair.second).into(fld);
+                            else
+                                fld.from(sv);
+                        }catch(std::exception& e){
+                            throw std::runtime_error(SB()<<"Unable to assign "<<pair.first
+                                                     <<" from \""<<escape(pair.second)<<"\""
+                                                     <<" : "<<e.what());
                         }
                     }
                     return val;
