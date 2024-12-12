@@ -36,9 +36,11 @@ std::set<std::string> PeerCredentials::roles() const
 
 std::ostream& operator<<(std::ostream& strm, const PeerCredentials& cred)
 {
+    if(cred.isTLS)
+        strm<<"TLS ";
     strm<<cred.method;
     if(!cred.authority.empty())
-        strm<<cred.authority;
+        strm<<":"<<cred.authority;
     strm<<"/"<<cred.account<<"@"<<cred.peer;
     return strm;
 }
