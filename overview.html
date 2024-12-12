@@ -1,0 +1,443 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Overview &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PVA Network Configuration" href="netconfig.html" />
+    <link rel="prev" title="PVXS client/server for PVA Protocol" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h1>
+<section id="basics">
+<h2>Basics<a class="headerlink" href="#basics" title="Permalink to this heading">¶</a></h2>
+<section id="what-is-epics">
+<h3>What is EPICS?<a class="headerlink" href="#what-is-epics" title="Permalink to this heading">¶</a></h3>
+<p><a class="reference external" href="https://docs.epics-controls.org/en/latest/guides/EPICS_Intro.html">Overview</a></p>
+<p><a class="reference external" href="https://epics-controls.org">epics-controls.org</a></p>
+<p><a class="reference external" href="https://epics.anl.gov">APS EPICS site</a></p>
+</section>
+<section id="what-is-pvaccess">
+<h3>What is PVAccess?<a class="headerlink" href="#what-is-pvaccess" title="Permalink to this heading">¶</a></h3>
+<p>PVAccess is network protocol supporting both request/response,
+and publish/subscribe operations.</p>
+<p>PVA is closely related to the Channel Access (CA) protocol,
+which PVA may work alongside, and is intended to supersede.</p>
+<p>Four protocol operations are supported by PVXS.</p>
+<ul class="simple">
+<li><p>Get - Fetch the present value of a PV.</p></li>
+<li><p>Put - Change the value of a PV.</p></li>
+<li><p>Monitor - Subscribe to changes in the value of a PV.</p></li>
+<li><p>RPC - A remote method call.</p></li>
+</ul>
+<p>Get, Put, Monitor, and RPC are to the PVA protocol what GET, PUT, POST are to the HTTP protocol.</p>
+</section>
+<section id="what-is-a-pv">
+<h3>What is a PV?<a class="headerlink" href="#what-is-a-pv" title="Permalink to this heading">¶</a></h3>
+<p>In the EPICS world a Process Variable (PV) refers to the idea of a globally addressed data structure.
+An EPICS control system is composed of many PVs.
+In the millions for large facilities.
+The present value of a PV is modified by a combination of remote operations via CA and/or PVA,
+and via local processing (eg. values read from local hardware).</p>
+<p>A common example of a PV is a measurement value, for example
+a temperature measured by a particular sensor (eg. <code class="docutils literal notranslate"><span class="pre">mylab:temp1</span></code>).
+Another example would be an electromechanical relay, which may be opened or closed.
+(eg. <code class="docutils literal notranslate"><span class="pre">mylab:valve2</span></code>)</p>
+<p>A PV name is needed when initiating any PVA operation.
+eg. with the <code class="docutils literal notranslate"><span class="pre">pvx*</span></code> utility executables.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>## fetch current value of both measurement and setting
+$ pvxget mylab:temp1 mylab:valve2
+...
+## setup subscription of both.
+$ pvxmonitor mylab:temp1 mylab:valve2
+...
+Ctrl+c
+## Request setting change
+$ pvxput mylab:valve2 1
+...
+</pre></div>
+</div>
+<p>In the case of the relay, a Get operation would poll the current open/closed state of the relay.
+A Monitor operation (subscription) would setup and receive notification when the relay state changes.
+A Put operation would be used to command the relay to open or close, or perhaps toggle (the precise meaning of a Put is context dependent).</p>
+<p>So the Get, Put, and Monitor operation on a given PV are conventionally operating on a common data structure.
+The RPC operation is more arbitrary, and need not have any relationship with a common data structure (eg. the open/closed state of the relay.)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the context of the PVA or CA protocols, a “PV name” is an address string which uniquely identifies a Process Variable.
+All PVA network operations begin with a “PV name” string.</p>
+</div>
+<p>A “PV name” string is to the PVA and CA protocols what a URL is to the HTTP protocol.
+The main difference being that while a URL is hierarchical, having a hostname and path string,
+a PV name is not.  The namespace of PV names is by default all local IP subnets (broadcast domains).
+This can be made more complicated though the specifics of client/server network configuration.</p>
+<p>The P4P module provides the ability to run PVA clients (cf. <a class="reference internal" href="client.html#clientapi"><span class="std std-ref">Client API</span></a>) and/or servers (cf. <a class="reference internal" href="server.html#serverapi"><span class="std std-ref">Server API</span></a>).</p>
+</section>
+</section>
+<section id="pvxs-module">
+<h2>PVXS Module<a class="headerlink" href="#pvxs-module" title="Permalink to this heading">¶</a></h2>
+<p>There are three main components of the PVXS module: data container, network client, and network server.</p>
+<p>Structured data is packaged into a <a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> container.
+In the PVA protocol, excepting the RPC operation, the server side of a network connection will dictate
+the specific structure used.</p>
+<p>A user of the client API will interact with Value instances of these server specified structures.
+Conversely, a user of the server API will need to decide on which data structures to use.</p>
+</section>
+<section id="comparison-with-pvdatacpp">
+<h2>Comparison with pvDataCPP<a class="headerlink" href="#comparison-with-pvdatacpp" title="Permalink to this heading">¶</a></h2>
+<p>The data component (<a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a>) of PVXS corresponds with the <a class="reference external" href="https://github.com/epics-base/pvDataCPP">pvDataCPP</a> module.
+It also incorporates parts of the <a class="reference external" href="https://github.com/epics-base/normativeTypesCPP">normativeTypesCPP</a> module (cf. <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">ntapi</span></code>).</p>
+<p>The most obvious difference in the design of pvData vs. PVXS is that the “class PVField” hierarchy is replaced
+with the single <a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> class.
+This avoids the need for explicit, often unsafe, downcasting (base to derived) within this hierarchy.</p>
+<p>Further, handling of PVField instances was always by smart pointer,
+opening many possibilities to dereference NULL pointers.
+By contrast, Value objects handle this indirection internally.
+Operations on a empty (aka. NULL) Value are well-defined,
+and are made safe by the type system and exceptions.</p>
+<section id="sub-field-lookup">
+<h3>Sub-field Lookup<a class="headerlink" href="#sub-field-lookup" title="Permalink to this heading">¶</a></h3>
+<p>Consider the following examples with pvDataCPP.
+First, as seen in early code.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span><span class="w"> </span><span class="c1">// maybe result of a Get operation (assume !NULL)</span>
+<span class="n">PVIntPtr</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getSubField</span><span class="o">&lt;</span><span class="n">PVInt</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">);</span>
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">value</span><span class="p">)</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="p">...</span>
+<span class="kt">int32_t</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>It is necessary to always remember to check for NULL when looking up sub-fields.
+Experience has shown that this is very easy to forget, and the result is a client crash
+if eg. the server type changes from PVInt (int32) to PVLong (int64).</p>
+<p>This can be improved by using the getSubFieldT() method which throws instead of returning NULL.
+Using PVScalar intermediate base class allows opportunistic conversion between scalar types,
+and throws when this is not possible (eg. between array and scalar).</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="kt">int32_t</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getSubFieldT</span><span class="o">&lt;</span><span class="n">PVScalar</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">getAs</span><span class="o">&lt;</span><span class="n">pvInt</span><span class="o">&gt;</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>With PVXS, the behavior is similar with a more compact syntax.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span><span class="w"> </span><span class="c1">// maybe result of a Get operation (could be NULL)</span>
+<span class="kt">int32_t</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Another case to consider is when a client wishes to extract a value from an optional field,
+or use a default if the field is not provided.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="kt">uint32_t</span><span class="w"> </span><span class="n">lim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1234u</span><span class="p">;</span><span class="w"> </span><span class="c1">// default</span>
+<span class="k">if</span><span class="p">(</span><span class="n">PVScalarPtr</span><span class="w"> </span><span class="n">limitHigh</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getSubField</span><span class="o">&lt;</span><span class="n">PVScalar</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;display.limitHigh&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">lim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">limitHigh</span><span class="o">-&gt;</span><span class="n">getAs</span><span class="o">&lt;</span><span class="n">pvUInt</span><span class="o">&gt;</span><span class="p">();</span><span class="w"> </span><span class="c1">// could still throw!</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>With PVXS</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="kt">uint32_t</span><span class="w"> </span><span class="n">lim</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1234u</span><span class="p">;</span><span class="w"> </span><span class="c1">// default</span>
+<span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">top</span><span class="p">[</span><span class="s">&quot;display.limitHigh&quot;</span><span class="p">].</span><span class="n">as</span><span class="p">(</span><span class="n">lim</span><span class="p">);</span><span class="w"> </span><span class="c1">// returns true if lim is updated</span>
+</pre></div>
+</div>
+</section>
+<section id="structure-iteration">
+<h3>Structure Iteration<a class="headerlink" href="#structure-iteration" title="Permalink to this heading">¶</a></h3>
+<p>Also consider iteration of the fields of a structure (children).</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="k">for</span><span class="p">(</span><span class="n">PVFieldPtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">fld</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getPVFields</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">fld</span><span class="o">-&gt;</span><span class="n">getFullName</span><span class="p">()</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="s">&quot; : &quot;</span><span class="o">&lt;&lt;*</span><span class="n">fld</span><span class="o">&lt;&lt;</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>With PVXS</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="k">for</span><span class="p">(</span><span class="n">Value</span><span class="w"> </span><span class="n">fld</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">top</span><span class="p">.</span><span class="n">ichildren</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="n">top</span><span class="p">.</span><span class="n">nameOf</span><span class="p">(</span><span class="n">fld</span><span class="p">)</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="s">&quot; : &quot;</span><span class="o">&lt;&lt;</span><span class="n">fld</span><span class="o">&lt;&lt;</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Where <strong>ichildren()</strong> could be replaced with <strong>iall()</strong> for a depth first iteration
+of all sub-fields within this structure, with <strong>imarked()</strong> for a depth first iteration
+of sub-fields marked as changed.  Which brings us to:</p>
+</section>
+<section id="testing-for-changed-fields">
+<h3>Testing for changed fields<a class="headerlink" href="#testing-for-changed-fields" title="Permalink to this heading">¶</a></h3>
+<p>While the PVA protocol is based around the idea of transferring partial updates
+to some structure fields, the PVField container classes don’t incorporate this.
+Instead, it is necessary to handle an separate BitSet object provided alongside each PVStructure.</p>
+<p>With PVXS, tracking of changed (or valid) fields is built into the Value class.</p>
+<p>For example, completion of a Get operation for a client is notified through the ChannelGetRequester::getDone()
+interface.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">getDone</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">Status</span><span class="o">&amp;</span><span class="w"> </span><span class="n">sts</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">ChannelGet</span><span class="o">::</span><span class="n">shared_pointer</span><span class="w"> </span><span class="n">op</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">PVStructurePtr</span><span class="o">&amp;</span><span class="w"> </span><span class="n">top</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">BitSet</span><span class="o">::</span><span class="n">shared_pointer</span><span class="o">&amp;</span><span class="w"> </span><span class="n">valid</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">sts</span><span class="p">.</span><span class="n">isSuccess</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">top</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">valid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;oops : &quot;</span><span class="o">&lt;&lt;</span><span class="n">sts</span><span class="o">&lt;&lt;</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">PVScalarPtr</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getSubField</span><span class="o">&lt;</span><span class="n">PVScalar</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">valid</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="n">value</span><span class="o">-&gt;</span><span class="n">getFieldOffset</span><span class="p">())</span>
+<span class="w">           </span><span class="o">||</span><span class="w"> </span><span class="n">valid</span><span class="o">-&gt;</span><span class="n">get</span><span class="p">(</span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getFieldOffset</span><span class="p">()))</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// &quot;value&quot; exists and is provided</span>
+<span class="w">            </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="o">-&gt;</span><span class="n">getAs</span><span class="o">&lt;</span><span class="n">pvInt</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>To unpack this.  Provided that sts.isSuccess(), and that neither ‘top’ nor ‘valid’ are NULL,
+the valid bit mask indicates which fields the server has actually provided a value for.
+Others retain a local default (zero or empty).</p>
+<p>In order to find out if the “value” field has actually been provided by the server,
+one must obtain the numeric field offset (bit index) with getFieldOffset(),
+and then query the BitSet.</p>
+<p>This approach opens the possibility of testing the wrong bit, or more commonly,
+not enough bits as it requires explicit knowledge about the PVA concept of “compress” bits
+for the top structure and any intermediate sub-structures.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="n">pvxs</span><span class="o">::</span><span class="n">client</span><span class="o">::</span><span class="n">Result</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">result</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">();</span><span class="w"> </span><span class="c1">// throws on local or remote error</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="n">Value</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">ifMarked</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// &quot;value&quot; exists and is provided</span>
+<span class="w">            </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;oops : &quot;</span><span class="o">&lt;&lt;</span><span class="n">e</span><span class="p">.</span><span class="n">what</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// also handles local errors</span>
+<span class="w">    </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>With PVXS, Get completion is notified through an callback functor set with <a class="reference internal" href="client.html#_CPPv4N4pvxs6client10GetBuilder6resultERRNSt8functionIFvRR6ResultEEE" title="pvxs::client::GetBuilder::result"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::GetBuilder::result()</span></code></a>,
+which will throw an exception if a local or remote error has occurred.</p>
+<p>The <a class="reference internal" href="value.html#_CPPv4NK4pvxs5Value8ifMarkedEbb" title="pvxs::Value::ifMarked"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::ifMarked()</span></code></a> method allows the lookup and test to be combined.
+It is also possible to test separately with the <a class="reference internal" href="value.html#_CPPv4NK4pvxs5Value8isMarkedEbb" title="pvxs::Value::isMarked"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::isMarked()</span></code></a> method.</p>
+</section>
+<section id="tracking-changed-fields">
+<h3>Tracking changed fields<a class="headerlink" href="#tracking-changed-fields" title="Permalink to this heading">¶</a></h3>
+<p>A server should perform the complement of this, and keep track of changes
+when filling in a structure to be sent.</p>
+<p>With PVField et al., this again requires a handling separate BitSet.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+<span class="n">BitSetPtr</span><span class="w"> </span><span class="nf">changed</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">BitSet</span><span class="p">(</span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getNumberFields</span><span class="p">()));</span>
+
+<span class="n">PVScalarPtr</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="o">-&gt;</span><span class="n">getSubFieldT</span><span class="o">&lt;</span><span class="n">PVScalar</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">);</span>
+<span class="n">value</span><span class="o">-&gt;</span><span class="n">putFrom</span><span class="o">&lt;</span><span class="n">pvInt</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">42</span><span class="p">);</span>
+<span class="n">changed</span><span class="o">-&gt;</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="o">-&gt;</span><span class="n">getFieldOffset</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>With PVXS Value, this is automatic.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">...;</span>
+
+<span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">42</span><span class="p">;</span>
+<span class="n">assert</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">isMarked</span><span class="p">());</span>
+</pre></div>
+</div>
+</section>
+<section id="ntscalar">
+<h3>NTScalar<a class="headerlink" href="#ntscalar" title="Permalink to this heading">¶</a></h3>
+<p>PVXS provides facility for building some common Normative Types, as with the normativeTypesCPP module.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NTScalar</span><span class="o">::</span><span class="n">createBuilder</span><span class="p">()</span>
+<span class="w">                    </span><span class="o">-&gt;</span><span class="n">value</span><span class="p">(</span><span class="n">pvInt</span><span class="p">)</span>
+<span class="w">                    </span><span class="o">-&gt;</span><span class="n">addAlarm</span><span class="p">()</span>
+<span class="w">                    </span><span class="o">-&gt;</span><span class="n">addTimeStamp</span><span class="p">()</span>
+<span class="w">                    </span><span class="o">-&gt;</span><span class="n">addDisplay</span><span class="p">()</span>
+<span class="w">                    </span><span class="o">-&gt;</span><span class="n">createPVStructure</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>becomes:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">Int32</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>The options are the value type (Int32) and whether display meta-data is included.
+Alarm and time meta-data are always included.</p>
+</section>
+<section id="custom-structures">
+<h3>Custom Structures<a class="headerlink" href="#custom-structures" title="Permalink to this heading">¶</a></h3>
+<p>Defining new structures with pvDataCPP is best accomplished with a FieldBuilder.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">PVStructurePtr</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pvd</span><span class="o">::</span><span class="n">getFieldCreate</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">createFieldBuilder</span><span class="p">()</span>
+<span class="w">                     </span><span class="o">-&gt;</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pvInt</span><span class="p">)</span>
+<span class="w">                     </span><span class="o">-&gt;</span><span class="n">addNestedStructure</span><span class="p">(</span><span class="s">&quot;alarm&quot;</span><span class="p">)</span>
+<span class="w">                         </span><span class="o">-&gt;</span><span class="n">add</span><span class="p">(</span><span class="s">&quot;severity&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pvInt</span><span class="p">)</span>
+<span class="w">                     </span><span class="o">-&gt;</span><span class="n">endNested</span><span class="p">()</span>
+<span class="w">                     </span><span class="o">-&gt;</span><span class="n">createStructure</span><span class="p">()</span>
+<span class="w">                     </span><span class="o">-&gt;</span><span class="n">build</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>becomes:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="o">::</span><span class="nn">members</span><span class="p">;</span>
+<span class="n">Value</span><span class="w"> </span><span class="n">top</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TypeDef</span><span class="p">(</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Struct</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">Int32</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">),</span>
+<span class="w">                </span><span class="n">Struct</span><span class="p">(</span><span class="s">&quot;alarm&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="n">Int32</span><span class="p">(</span><span class="s">&quot;severity&quot;</span><span class="p">),</span>
+<span class="w">                </span><span class="p">}),</span>
+<span class="w">            </span><span class="p">}).</span><span class="n">create</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>One significant difference which may not be immediately obvious is that the later
+will be automatically indented correctly by code beautifiers.</p>
+</section>
+</section>
+<section id="comparison-with-pvaccesscpp">
+<h2>Comparison with pvAccessCPP<a class="headerlink" href="#comparison-with-pvaccesscpp" title="Permalink to this heading">¶</a></h2>
+<p>The client and server components of PVXS are heavily influenced by the <a class="reference external" href="http://epics-base.github.io/pvAccessCPP/group__pvac.html">pvac</a> and <a class="reference external" href="http://epics-base.github.io/pvAccessCPP/group__pvas.html">pvas</a> APIs of pvAccessCPP.
+eg. the analog of pvac::ClientProvider is <a class="reference internal" href="client.html#_CPPv4N4pvxs6client7ContextE" title="pvxs::client::Context"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context</span></code></a>, while pvas::Server and pvas::SharedPV correspond with <a class="reference internal" href="server.html#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Server</span></code></a> and <a class="reference internal" href="sharedpv.html#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::SharedPV</span></code></a>.</p>
+<p>The principle practical difference is that PVXS uses functors where the other APIs using interface classes.</p>
+<p>For example, sub-classing pvac::ClientChannel::GetCallback to provide a getDone() callback.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">MyGetCallback</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="k">public</span><span class="w"> </span><span class="n">pvac</span><span class="o">::</span><span class="n">ClientChannel</span><span class="o">::</span><span class="n">GetCallback</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">pvac</span><span class="o">::</span><span class="n">Operation</span><span class="w"> </span><span class="n">inprog</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">getDone</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="n">GetEvent</span><span class="o">&amp;</span><span class="w"> </span><span class="n">evt</span><span class="p">)</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="p">...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="p">...</span>
+<span class="kt">void</span><span class="w"> </span><span class="n">startOp</span><span class="p">(</span><span class="n">ClientChannel</span><span class="o">&amp;</span><span class="w"> </span><span class="n">chan</span><span class="p">,</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">MyGetCallback</span><span class="w"> </span><span class="n">cb</span><span class="p">;</span>
+<span class="w">    </span><span class="n">cb</span><span class="p">.</span><span class="n">inprog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">chan</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cb</span><span class="p">);</span>
+<span class="w">    </span><span class="p">...</span>
+</pre></div>
+</div>
+<p>With PVXS, this becomes:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="kt">void</span><span class="w"> </span><span class="nf">startOp</span><span class="p">(</span><span class="n">pvxs</span><span class="o">::</span><span class="n">client</span><span class="o">::</span><span class="n">Context</span><span class="o">&amp;</span><span class="w"> </span><span class="n">ctxt</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">pvxs</span><span class="o">::</span><span class="n">Operation</span><span class="o">&gt;</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctxt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;pv:name&quot;</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="n">result</span><span class="p">([](</span><span class="n">pvxs</span><span class="o">::</span><span class="n">Result</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="p">...</span>
+<span class="w">            </span><span class="p">})</span>
+<span class="w">            </span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basics">Basics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-epics">What is EPICS?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-pvaccess">What is PVAccess?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-is-a-pv">What is a PV?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pvxs-module">PVXS Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#comparison-with-pvdatacpp">Comparison with pvDataCPP</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sub-field-lookup">Sub-field Lookup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#structure-iteration">Structure Iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-for-changed-fields">Testing for changed fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tracking-changed-fields">Tracking changed fields</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ntscalar">NTScalar</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom-structures">Custom Structures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#comparison-with-pvaccesscpp">Comparison with pvAccessCPP</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">PVXS client/server for PVA Protocol</a></li>
+      <li>Next: <a href="netconfig.html" title="next chapter">PVA Network Configuration</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/overview.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

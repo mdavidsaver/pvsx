@@ -1,0 +1,355 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>IOC Integration &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="QSRV Groups" href="qgroup.html" />
+    <link rel="prev" title="Data Source" href="source.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="ioc-integration">
+<h1>IOC Integration<a class="headerlink" href="#ioc-integration" title="Permalink to this heading">¶</a></h1>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/iochooks.h&gt;</span>
+<span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">namespace</span><span class="w"> </span><span class="nn">ioc</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The separate <code class="docutils literal notranslate"><span class="pre">pvxsIoc</span></code> library exists to run a PVXS server as part of an IOC.
+See also <a class="reference internal" href="building.html#includepvxs"><span class="std std-ref">Including PVXS in your application</span></a>.</p>
+<p>IOC Integration respects the <strong>$PVXS_LOG</strong> as well as the <strong>$EPICS_PVA*</strong> environment variables.
+Changes to this environment variable are possible prior to
+calling <code class="docutils literal notranslate"><span class="pre">*_registerRecordDeviceDriver(pdbbase)</span></code>.</p>
+<section id="ioc-shell">
+<h2>IOC shell<a class="headerlink" href="#ioc-shell" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">pvxsIoc</span></code> library adds several IOC shell functions which apply to all PVs
+served by the Integrated PVA server.</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv45pvxsri">
+<span id="_CPPv35pvxsri"></span><span id="_CPPv25pvxsri"></span><span id="pvxsr__i"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pvxsr</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv45pvxsri" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>PVXS Server Report.  Shows information about server configuration (level==0)
+or about connected clients (level&gt;0).  Indirectly calls <a class="reference internal" href="source.html#_CPPv4N4pvxs6server6Source4showERNSt7ostreamE" title="pvxs::server::Source::show"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Source::show()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv45pvxsli">
+<span id="_CPPv35pvxsli"></span><span id="_CPPv25pvxsli"></span><span id="pvxsl__i"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pvxsl</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv45pvxsli" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>PVXS Server List.  Lists attached Sources and PV names.
+Indirectly calls <a class="reference internal" href="source.html#_CPPv4N4pvxs6server6Source6onListEv" title="pvxs::server::Source::onList"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Source::onList()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv45pvxsiv">
+<span id="_CPPv35pvxsiv"></span><span id="_CPPv25pvxsiv"></span><span id="pvxsi"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pvxsi</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv45pvxsiv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Print information about module versions, target, and toolchain.
+May be requested when reporting a bug.</p>
+</dd></dl>
+
+</section>
+<section id="adding-custom-pvs-to-server">
+<h2>Adding custom PVs to Server<a class="headerlink" href="#adding-custom-pvs-to-server" title="Permalink to this heading">¶</a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs3ioc6serverEv">
+<span id="_CPPv3N4pvxs3ioc6serverEv"></span><span id="_CPPv2N4pvxs3ioc6serverEv"></span><span id="pvxs::ioc::server"></span><span class="target" id="iochooks_8h_1aa77d4e8e561e79f912e9527021afc711"></span><a class="reference internal" href="#_CPPv4N4pvxs3ioc6serverEv" title="pvxs::ioc::server"><span class="n"><span class="pre">server</span></span></a><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Server</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ioc</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">server</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs3ioc6serverEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return the singleton Server instance which is setup for use in an IOC process.</p>
+<p>This Server instance is created during a registrar function, started by the initHookAfterCaServerRunning phase of iocInit(). It is stopped and destroyed during an epicsAtExit() hook added during an initHookAfterInitDatabase hook..</p>
+<p>Any configuration changes via. epicsEnvSet() must be made before registrars are run by *_registerRecordDeviceDriver(pdbbase).</p>
+<p><a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">server::SharedPV</span></a> and <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">server::Source</span></a> added before iocInit() will be available immediately. Others may be added (or removed) later.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">static</span> <span class="n">void</span> <span class="n">myinitHook</span><span class="p">(</span><span class="n">initHookState</span> <span class="n">state</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span><span class="p">(</span><span class="n">state</span><span class="o">!=</span><span class="n">initHookAfterIocBuilt</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="n">server</span><span class="p">::</span><span class="n">SharedPV</span> <span class="n">mypv</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+    <span class="n">ioc</span><span class="p">::</span><span class="n">server</span><span class="p">()</span>
+          <span class="o">.</span><span class="n">addPV</span><span class="p">(</span><span class="s2">&quot;my:pv:name&quot;</span><span class="p">,</span> <span class="n">mypv</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="n">static</span> <span class="n">void</span> <span class="n">myregistrar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">initHookRegister</span><span class="p">(</span><span class="o">&amp;</span><span class="n">myinitHook</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="n">extern</span> <span class="s2">&quot;C&quot;</span> <span class="p">{</span>
+     <span class="o">//</span> <span class="n">needs</span> <span class="n">matching</span> <span class="s2">&quot;registrar(myregistrar)&quot;</span> <span class="ow">in</span> <span class="o">.</span><span class="n">dbd</span>
+    <span class="n">epicsExportRegistrar</span><span class="p">(</span><span class="n">myregistrar</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+ </p>
+<dl class="field-list simple">
+<dt class="field-odd">Throws<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">logic_error</span></span></span> – if called before instance is created, or after instance is destroyed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+<section id="qsrv-2">
+<span id="qsrv2"></span><h1>QSRV 2<a class="headerlink" href="#qsrv-2" title="Permalink to this heading">¶</a></h1>
+<p>Beginning with PVXS 1.2.0 the functionality of <a class="reference external" href="https://epics-base.github.io/pva2pva">QSRV</a>
+is replicated in the <code class="docutils literal notranslate"><span class="pre">pvxsIoc</span></code> library.
+As of 1.3.0 this feature preview is considered <strong>beta</strong> level with equivalent functionality.</p>
+<p>It is recommended not to load both <code class="docutils literal notranslate"><span class="pre">pvxsIoc.dbd</span></code> and <code class="docutils literal notranslate"><span class="pre">qsrv.dbd</span></code> in the same IOC process.
+However, if this is done.  Users may opt out at runtime by setting
+<code class="docutils literal notranslate"><span class="pre">$PVXS_QSRV_ENABLE=NO</span></code> before <code class="docutils literal notranslate"><span class="pre">iocInit()</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default with PVXS &gt;= 1.3.0</span>
+<span class="c1"># Needed with PVXS 1.2.x</span>
+<span class="n">epicsEnvSet</span><span class="p">(</span><span class="s2">&quot;PVXS_QSRV_ENABLE&quot;</span><span class="p">,</span> <span class="s2">&quot;YES&quot;</span><span class="p">)</span>
+<span class="n">iocInit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The features of QSRV are divided into three broad categories.</p>
+<ul class="simple">
+<li><p>Single PV access</p></li>
+<li><p>Group PV access</p></li>
+<li><p>PVA Links</p></li>
+</ul>
+<section id="id1">
+<h2>IOC Shell<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<p>IOC Shell commands specific to database integration.</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv45pvxgliPKc">
+<span id="_CPPv35pvxgliPKc"></span><span id="_CPPv25pvxgliPKc"></span><span id="pvxgl__i.cCP"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pvxgl</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">level</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">pattern</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv45pvxgliPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Group PV information.  At detail level 0, lists Group names.
+Pattern restricts listing to only matching names.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv411dbLoadGroupPKcPKc">
+<span id="_CPPv311dbLoadGroupPKcPKc"></span><span id="_CPPv211dbLoadGroupPKcPKc"></span><span id="dbLoadGroup__cCP.cCP"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dbLoadGroup</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">file</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">macros</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv411dbLoadGroupPKcPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Load Group definitions from a separate JSON file.
+(as opposed to <code class="docutils literal notranslate"><span class="pre">info(Q:group,</span> <span class="pre">{...})</span></code> in a .db file)
+See <a class="reference internal" href="qgroup.html#groupjson"><span class="std std-ref">JSON Reference</span></a>.</p>
+</dd></dl>
+
+</section>
+<section id="single-pv">
+<h2>Single PV<a class="headerlink" href="#single-pv" title="Permalink to this heading">¶</a></h2>
+<p>When QSRV is enabled, access to individual/single PVs in the global process database
+is automatic and equivalent to the access provided by the Channel Access server
+in the IOC (aka. RSRV).</p>
+<p>So <code class="docutils literal notranslate"><span class="pre">caget</span> <span class="pre">pv:name</span></code> and <code class="docutils literal notranslate"><span class="pre">pvxget</span> <span class="pre">pv:name</span></code> should be functionally equivalent.</p>
+<p>Beginning with 1.2.3, long string detection is automatic in some cases.
+eg. <code class="docutils literal notranslate"><span class="pre">.NAME</span></code> and <code class="docutils literal notranslate"><span class="pre">.INP</span></code>.
+In some situations adding a <code class="docutils literal notranslate"><span class="pre">$</span></code> suffix is still necessary when addressing
+a <code class="docutils literal notranslate"><span class="pre">DBF_STRING</span></code> or <code class="docutils literal notranslate"><span class="pre">DBF_*LINK</span></code> field to make it visible as a PVA string.
+It will not be necessary for clients to interpret a <code class="docutils literal notranslate"><span class="pre">char[]</span></code> as a “long string”.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># eg.
+pvget some:record.NAME$
+pvget some:record.INP$
+</pre></div>
+</div>
+<p>An <code class="docutils literal notranslate"><span class="pre">info(Q:form,</span> <span class="pre">&quot;...&quot;)</span></code> may be used to set the <code class="docutils literal notranslate"><span class="pre">display.form</span></code> PVA meta-data hint
+which is used by some OPI clients.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longin</span><span class="p">,</span> <span class="s2">&quot;my:bits&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">VAL</span><span class="p">,</span> <span class="s2">&quot;0x1234&quot;</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">Q</span><span class="p">:</span><span class="n">form</span><span class="p">,</span> <span class="s2">&quot;Hex&quot;</span><span class="p">)</span> <span class="c1"># hint to clients to render as hexadecimal</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">waveform</span><span class="p">,</span> <span class="s2">&quot;my:long:string&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">FTVL</span><span class="p">,</span> <span class="s2">&quot;CHAR&quot;</span><span class="p">)</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">NELM</span><span class="p">,</span> <span class="s2">&quot;1024&quot;</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">Q</span><span class="p">:</span><span class="n">form</span><span class="p">,</span> <span class="s2">&quot;String&quot;</span><span class="p">)</span> <span class="c1"># hint to QSRV to expose char[] as string</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Currently supported format hints are:</p>
+<ul class="simple">
+<li><p>Default</p></li>
+<li><p>String</p></li>
+<li><p>Binary</p></li>
+<li><p>Decimal</p></li>
+<li><p>Hex</p></li>
+<li><p>Exponential</p></li>
+<li><p>Engineering</p></li>
+</ul>
+</section>
+<section id="group-pv">
+<h2>Group PV<a class="headerlink" href="#group-pv" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="qgroup.html">QSRV Groups</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qgroup.html#json-reference">JSON Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qgroup.html#understanding-groups">Understanding Groups</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="access-security">
+<h2>Access Security<a class="headerlink" href="#access-security" title="Permalink to this heading">¶</a></h2>
+<p>QSRV will enforce an optional access control policy file (<code class="docutils literal notranslate"><span class="pre">.acf</span></code>) loaded by <code class="docutils literal notranslate"><span class="pre">asSetFilename()</span></code>.
+This policy is applied to Single PVs just as RSRV does for Channel Access.
+With Group PVs, restrictions are not defined for the group, but rather for the individual member records.
+The same policy applies whether record is accessed individually, or through a group.</p>
+<p>Policy application differs from CA (RSRV) in several ways:</p>
+<p>Client hostname is always the numeric IP address.
+<code class="docutils literal notranslate"><span class="pre">HAG()</span></code> entries must either contained numeric IP addresses,
+or that <code class="docutils literal notranslate"><span class="pre">asCheckClientIP=1</span></code> flag must be set to translate hostnames into IPs on ACF file load (effects CA server as well).
+This prevents clients from trivially forging “hostname”.
+In additional to client usernames <code class="docutils literal notranslate"><span class="pre">UAG()</span></code> definitions may contained items beginning with <code class="docutils literal notranslate"><span class="pre">role/</span></code> which are matched against the list of local systems groups of which the client username is a member.
+Username to group lookup is done <em>locally</em> by QSRV, and depends on IOC host authentication configuration.
+Note that this is still based on the client provided username string.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">UAG</span><span class="p">(</span><span class="n">special</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">someone</span><span class="p">,</span> <span class="s2">&quot;role/op&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The “special” <code class="docutils literal notranslate"><span class="pre">UAG()</span></code> will match CA or PVA clients with the username “someone”.
+It will also match a PVA client if the “special” account exists locally,
+and is a member of the “op” group (supported on POSIX targets and Windows).</p>
+</section>
+<section id="pvaccess-links">
+<h2>PVAccess Links<a class="headerlink" href="#pvaccess-links" title="Permalink to this heading">¶</a></h2>
+<p>Since PVXS 1.3.0.</p>
+<p>When built against Base &gt;= 7.0.1, support is enabled for PVAccess links
+using JSON link support syntax.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">longin</span><span class="p">,</span> <span class="s2">&quot;tgt&quot;</span><span class="p">)</span> <span class="p">{}</span>
+<span class="n">record</span><span class="p">(</span><span class="n">longin</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">field</span><span class="p">(</span><span class="n">INP</span><span class="p">,</span> <span class="p">{</span><span class="n">pva</span><span class="p">:{</span><span class="n">pv</span><span class="p">:</span><span class="s2">&quot;tgt&quot;</span><span class="p">}})</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pvalink.html">PVA Links</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pvalink.html#json-reference">JSON Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pvalink.html#input-links">Input Links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pvalink.html#output-links">Output Links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pvalink.html#forward-links">Forward Links</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">IOC Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#ioc-shell">IOC shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adding-custom-pvs-to-server">Adding custom PVs to Server</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#qsrv-2">QSRV 2</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">IOC Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#single-pv">Single PV</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#group-pv">Group PV</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="qgroup.html">QSRV Groups</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#access-security">Access Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pvaccess-links">PVAccess Links</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pvalink.html">PVA Links</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="source.html" title="previous chapter">Data Source</a></li>
+      <li>Next: <a href="qgroup.html" title="next chapter">QSRV Groups</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/ioc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,446 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Examples &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Building from Source" href="building.html" />
+    <link rel="prev" title="PVA Network Configuration" href="netconfig.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h1>
+<p>Example are built, but not installed.
+They can be found under example/O.*</p>
+<p>Latest versions <a class="reference external" href="https://github.com/epics-base/pvxs/blob/master/example/">https://github.com/epics-base/pvxs/blob/master/example/</a></p>
+<section id="shortest-client-get">
+<h2>Shortest Client Get<a class="headerlink" href="#shortest-client-get" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-c++ notranslate" id="simpleget-cpp"><div class="highlight"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * Copyright - See the COPYRIGHT that is included with this distribution.</span>
+<span class="cm"> * pvxs is distributed subject to a Software License Agreement found</span>
+<span class="cm"> * in file LICENSE that is included with this distribution.</span>
+<span class="cm"> */</span>
+<span class="cm">/** The short example of a client GET operation.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/client.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/log.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// (Optional) configuring logging using $PVXS_LOG</span>
+<span class="w">    </span><span class="n">logger_config_env</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Configure client using $EPICS_PVA_*</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">ctxt</span><span class="p">(</span><span class="n">client</span><span class="o">::</span><span class="n">Context</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">());</span>
+
+<span class="w">    </span><span class="c1">// fetch PV &quot;some:pv:name&quot; and wait up to 5 seconds for a reply.</span>
+<span class="w">    </span><span class="c1">// (throws an exception on error, including timeout)</span>
+<span class="w">    </span><span class="n">Value</span><span class="w"> </span><span class="n">reply</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctxt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;some:pv:name&quot;</span><span class="p">).</span><span class="n">exec</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="mf">5.0</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// Reply is printed to stdout.</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">reply</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="shortest-server">
+<h2>Shortest Server<a class="headerlink" href="#shortest-server" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-c++ notranslate" id="simplesrv-cpp"><div class="highlight"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * Copyright - See the COPYRIGHT that is included with this distribution.</span>
+<span class="cm"> * pvxs is distributed subject to a Software License Agreement found</span>
+<span class="cm"> * in file LICENSE that is included with this distribution.</span>
+<span class="cm"> */</span>
+<span class="cm">/** The short example of a server.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/server.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/sharedpv.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/nt.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/log.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// (Optional) configuring logging using $PVXS_LOG</span>
+<span class="w">    </span><span class="n">logger_config_env</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Use pre-defined NTScalar structure w/ double for primary value field.</span>
+<span class="w">    </span><span class="n">Value</span><span class="w"> </span><span class="n">initial</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Float64</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+<span class="w">    </span><span class="n">initial</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">42.0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Storage and access for network visible Process Variable</span>
+<span class="w">    </span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="w"> </span><span class="nf">pv</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">::</span><span class="n">buildMailbox</span><span class="p">());</span>
+<span class="w">    </span><span class="n">pv</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">initial</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">server</span><span class="o">::</span><span class="n">Server</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">()</span><span class="w">        </span><span class="c1">// Configure a server using $EPICS_PVAS_* or $EPICS_PVA_*</span>
+<span class="w">            </span><span class="p">.</span><span class="n">addPV</span><span class="p">(</span><span class="s">&quot;my:pv:name&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">pv</span><span class="p">)</span><span class="w"> </span><span class="c1">// add (and name) one local PV</span>
+<span class="w">            </span><span class="p">.</span><span class="n">run</span><span class="p">();</span><span class="w">                  </span><span class="c1">// run until SIGINT</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="client-demo">
+<h2>Client Demo<a class="headerlink" href="#client-demo" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-c++ notranslate" id="client-cpp"><div class="highlight"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * Copyright - See the COPYRIGHT that is included with this distribution.</span>
+<span class="cm"> * pvxs is distributed subject to a Software License Agreement found</span>
+<span class="cm"> * in file LICENSE that is included with this distribution.</span>
+<span class="cm"> */</span>
+<span class="cm">/** Meant to be run against the mailbox example.</span>
+<span class="cm"> *  eg. in one terminal run:</span>
+<span class="cm"> *</span>
+<span class="cm"> *   ./mailbox some:pv:name</span>
+<span class="cm"> *</span>
+<span class="cm"> * And in another terminal run:</span>
+<span class="cm"> *</span>
+<span class="cm"> *   ./client some:pv:name</span>
+<span class="cm"> */</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/client.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/log.h&gt;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="p">;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">argc</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="o">&lt;&lt;</span><span class="s">&quot;Usage: &quot;</span><span class="o">&lt;&lt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &lt;pvname&gt;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Read $PVXS_LOG from process environment and update</span>
+<span class="w">    </span><span class="c1">// logging configuration.  eg.</span>
+<span class="w">    </span><span class="c1">//    export PVXS_LOG=*=DEBUG</span>
+<span class="w">    </span><span class="c1">// makes a lot of noise.</span>
+<span class="w">    </span><span class="n">logger_config_env</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Create a client context</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">ctxt</span><span class="p">(</span><span class="n">client</span><span class="o">::</span><span class="n">Context</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">());</span>
+
+<span class="w">    </span><span class="c1">// Fetch current value</span>
+<span class="w">    </span><span class="kt">int32_t</span><span class="w"> </span><span class="n">current</span><span class="p">;</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Getting current value of &#39;&quot;</span><span class="o">&lt;&lt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot;&#39;&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// Build and start network operation</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctxt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="w">                </span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// wait for it to complete, for up to 5 seconds.</span>
+<span class="w">        </span><span class="n">Value</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">op</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="mf">5.0</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Result is:</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">&lt;&lt;</span><span class="n">result</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="k">auto</span><span class="w"> </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// there is a .value field</span>
+<span class="w">            </span><span class="c1">// as may still throw pvxs::NoConvert if its value can&#39;t</span>
+<span class="w">            </span><span class="c1">// be converted to int32_t</span>
+<span class="w">            </span><span class="n">current</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// an example.  won&#39;t happen with mailbox server</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="o">&lt;&lt;</span><span class="s">&quot;Server type doesn&#39;t have .value field!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// attempt to change.</span>
+<span class="w">        </span><span class="c1">// uses simple builder form to assign .value</span>
+
+<span class="w">        </span><span class="n">ctxt</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="w">                </span><span class="p">.</span><span class="n">set</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">current</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="n">exec</span><span class="p">()</span>
+<span class="w">                </span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="mf">5.0</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;First increment successful&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// change again.</span>
+<span class="w">        </span><span class="c1">// use build() callback</span>
+
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctxt</span><span class="p">.</span><span class="n">put</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="w">                </span><span class="c1">// provide present value to build() callback.</span>
+<span class="w">                </span><span class="p">.</span><span class="n">fetchPresent</span><span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="n">build</span><span class="p">([](</span><span class="n">Value</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">current</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">Value</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="c1">// allocate an empty container</span>
+<span class="w">                    </span><span class="k">auto</span><span class="w"> </span><span class="n">toput</span><span class="p">(</span><span class="n">current</span><span class="p">.</span><span class="n">cloneEmpty</span><span class="p">());</span>
+
+<span class="w">                    </span><span class="c1">// fill in .value.</span>
+<span class="w">                    </span><span class="c1">// Assignment implicitly marks .value as changed</span>
+<span class="w">                    </span><span class="n">toput</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">current</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="w">                    </span><span class="c1">// return the container to be sent</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">toput</span><span class="p">;</span>
+<span class="w">                </span><span class="p">})</span>
+<span class="w">                </span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+
+<span class="w">        </span><span class="n">op</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="mf">5.0</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Second increment successful&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// fetch final value</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Getting current value of &#39;&quot;</span><span class="o">&lt;&lt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot;&#39;&quot;</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// Build and start network operation</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctxt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="w">                </span><span class="p">.</span><span class="n">exec</span><span class="p">()</span>
+<span class="w">                </span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="mf">5.0</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Result is:</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">&lt;&lt;</span><span class="n">result</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="mailbox-server">
+<h2>Mailbox Server<a class="headerlink" href="#mailbox-server" title="Permalink to this heading">¶</a></h2>
+<div class="highlight-c++ notranslate" id="mailbox-cpp"><div class="highlight"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * Copyright - See the COPYRIGHT that is included with this distribution.</span>
+<span class="cm"> * pvxs is distributed subject to a Software License Agreement found</span>
+<span class="cm"> * in file LICENSE that is included with this distribution.</span>
+<span class="cm"> */</span>
+<span class="cm">/**</span>
+<span class="cm"> * Serves a single PV name.</span>
+<span class="cm"> * Any updates written (PUT) to this PV will be stored verbatim</span>
+<span class="cm"> * and sent to any subscribers.</span>
+<span class="cm"> */</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;epicsTime.h&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/sharedpv.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/server.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/nt.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/log.h&gt;</span>
+
+<span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="p">;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">argc</span><span class="o">&lt;=</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">std</span><span class="o">::</span><span class="n">cerr</span><span class="o">&lt;&lt;</span><span class="s">&quot;Usage: &quot;</span><span class="o">&lt;&lt;</span><span class="n">argv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;&lt;</span><span class="s">&quot; &lt;pvname&gt; [pvname1 [...]]</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Read $PVXS_LOG from process environment and update</span>
+<span class="w">    </span><span class="c1">// logging configuration.  eg.</span>
+<span class="w">    </span><span class="c1">//    export PVXS_LOG=*=DEBUG</span>
+<span class="w">    </span><span class="c1">// makes a lot of noise.</span>
+<span class="w">    </span><span class="n">logger_config_env</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// Must provide a data type for the mailbox.</span>
+<span class="w">    </span><span class="c1">// Use pre-canned definition of scalar with meta-data</span>
+<span class="w">    </span><span class="n">Value</span><span class="w"> </span><span class="n">initial</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Float64</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// (optional) Provide an initial value</span>
+<span class="w">    </span><span class="n">initial</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">42.0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">initial</span><span class="p">[</span><span class="s">&quot;alarm.severity&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">initial</span><span class="p">[</span><span class="s">&quot;alarm.status&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">initial</span><span class="p">[</span><span class="s">&quot;alarm.message&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">&gt;</span><span class="w"> </span><span class="n">pvs</span><span class="p">(</span><span class="n">argc</span><span class="mi">-1u</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0ul</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">pvs</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// Actually creating a mailbox PV.</span>
+<span class="w">        </span><span class="c1">// buildMailbox() installs a default onPut() handler which</span>
+<span class="w">        </span><span class="c1">// stores whatever a client sends (subject to our data type).</span>
+<span class="w">        </span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="w"> </span><span class="n">pv</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">::</span><span class="n">buildMailbox</span><span class="p">());</span>
+
+<span class="w">        </span><span class="c1">// (optional) Replace the default PUT handler to do a range check</span>
+<span class="w">        </span><span class="n">pv</span><span class="p">.</span><span class="n">onPut</span><span class="p">([](</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pv</span><span class="p">,</span>
+<span class="w">                 </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">server</span><span class="o">::</span><span class="n">ExecOp</span><span class="o">&gt;&amp;&amp;</span><span class="w"> </span><span class="n">op</span><span class="p">,</span>
+<span class="w">                 </span><span class="n">Value</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">top</span><span class="p">)</span>
+<span class="w">         </span><span class="p">{</span>
+
+<span class="w">             </span><span class="c1">// (optional) arbitrarily clip value to [-100.0, 100.0]</span>
+<span class="w">             </span><span class="kt">double</span><span class="w"> </span><span class="n">val</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="w">             </span><span class="k">if</span><span class="p">(</span><span class="n">val</span><span class="o">&lt;</span><span class="mf">-100.0</span><span class="p">)</span>
+<span class="w">                 </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-100.0</span><span class="p">;</span>
+<span class="w">             </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="p">(</span><span class="n">val</span><span class="o">&gt;</span><span class="mf">100.0</span><span class="p">)</span>
+<span class="w">                 </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100.0</span><span class="p">;</span>
+
+<span class="w">             </span><span class="c1">// (optional) Provide a timestamp if the client has not (common)</span>
+<span class="w">             </span><span class="n">Value</span><span class="w"> </span><span class="n">ts</span><span class="p">(</span><span class="n">top</span><span class="p">[</span><span class="s">&quot;timeStamp&quot;</span><span class="p">]);</span>
+<span class="w">             </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">ts</span><span class="p">.</span><span class="n">isMarked</span><span class="p">(</span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                 </span><span class="c1">// use current time</span>
+<span class="w">                 </span><span class="n">epicsTimeStamp</span><span class="w"> </span><span class="n">now</span><span class="p">;</span>
+<span class="w">                 </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">epicsTimeGetCurrent</span><span class="p">(</span><span class="o">&amp;</span><span class="n">now</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                     </span><span class="n">ts</span><span class="p">[</span><span class="s">&quot;secondsPastEpoch&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">now</span><span class="p">.</span><span class="n">secPastEpoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">POSIX_TIME_AT_EPICS_EPOCH</span><span class="p">;</span>
+<span class="w">                     </span><span class="n">ts</span><span class="p">[</span><span class="s">&quot;nanoseconds&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">now</span><span class="p">.</span><span class="n">nsec</span><span class="p">;</span>
+<span class="w">                 </span><span class="p">}</span>
+<span class="w">             </span><span class="p">}</span>
+
+<span class="w">             </span><span class="c1">// (optional) update the SharedPV cache and send</span>
+<span class="w">             </span><span class="c1">// a update to any subscribers</span>
+<span class="w">             </span><span class="n">pv</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="n">top</span><span class="p">);</span>
+
+<span class="w">             </span><span class="c1">// Required.  Inform client that PUT operation is complete.</span>
+<span class="w">             </span><span class="n">op</span><span class="o">-&gt;</span><span class="n">reply</span><span class="p">();</span>
+<span class="w">         </span><span class="p">});</span>
+
+<span class="w">        </span><span class="c1">// Associate a data type (and maybe initial value) with this PV</span>
+<span class="w">        </span><span class="n">pv</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">initial</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">pvs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">pv</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// Build server which will serve this PV</span>
+<span class="w">    </span><span class="c1">// Configure using process environment.</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">serv</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">Server</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">());</span>
+
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0ul</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&lt;</span><span class="n">pvs</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">serv</span><span class="p">.</span><span class="n">addPV</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">pvs</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// (optional) Print the configuration this server is using</span>
+<span class="w">    </span><span class="c1">// with any auto-address list expanded.</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Effective config</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">&lt;&lt;</span><span class="n">serv</span><span class="p">.</span><span class="n">config</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Running</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// Start server and run forever, or until Ctrl+c is pressed.</span>
+<span class="w">    </span><span class="c1">// Returns on SIGINT or SIGTERM</span>
+<span class="w">    </span><span class="n">serv</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s">&quot;Done</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#shortest-client-get">Shortest Client Get</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#shortest-server">Shortest Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#client-demo">Client Demo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mailbox-server">Mailbox Server</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="netconfig.html" title="previous chapter">PVA Network Configuration</a></li>
+      <li>Next: <a href="building.html" title="next chapter">Building from Source</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/example.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

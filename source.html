@@ -1,0 +1,685 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Data Source &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="IOC Integration" href="ioc.html" />
+    <link rel="prev" title="SharedPV and StaticSource" href="sharedpv.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="data-source">
+<h1>Data Source<a class="headerlink" href="#data-source" title="Permalink to this heading">¶</a></h1>
+<p>The low-level API through which a <a class="reference internal" href="server.html#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Server</span></code></a> may issue requests on behalf of remote clients.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/server.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="n">namespace</span> <span class="n">server</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="sharedpv.html#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::SharedPV</span></code></a> API should be preferred when a Server has a predetermined set of PV names.</p>
+<p>The <a class="reference internal" href="#_CPPv4N4pvxs6server6SourceE" title="pvxs::server::Source"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Source</span></code></a> interface is a more general, and complex, means of allowing a Server
+to respond to PV names as clients search for them.
+This may be necessary in specialized cases such as gateway, proxy, or bridge servers.</p>
+<section id="threading">
+<span id="sourcethreading"></span><h2>Threading<a class="headerlink" href="#threading" title="Permalink to this heading">¶</a></h2>
+<p>A Server will invoke user callback functions from one or more internal worker threads.
+However, it is guaranteed that callbacks relating to a given PV will never be executed concurrently.
+This implies that callbacks for a single operation,
+those stored through a <a class="reference internal" href="#_CPPv4N4pvxs6server14ChannelControlE" title="pvxs::server::ChannelControl"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::ChannelControl</span></code></a> and related *Op,
+will also never be executed concurrently.</p>
+</section>
+<section id="ownership-and-lifetime">
+<h2>Ownership and Lifetime<a class="headerlink" href="#ownership-and-lifetime" title="Permalink to this heading">¶</a></h2>
+<p>The *Op classes are interfaces through which callback functors are passed.
+These functors are stored in underlying, and otherwise hidden, server data structures.
+Therefore, it is safe to eg. capture a <code class="docutils literal notranslate"><span class="pre">shared_ptr&lt;ExecOp&gt;</span></code> into an <code class="docutils literal notranslate"><span class="pre">onCancel</span></code>
+functor without creating a reference loop.</p>
+<p>The lifetime of these server data structures are tied to the remote client.
+So variables captured into a functor like <a class="reference internal" href="#_CPPv4N4pvxs6server9ConnectOp5onGetERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEEEEE" title="pvxs::server::ConnectOp::onGet"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::ConnectOp::onGet()</span></code></a>, or onCancel,
+will be destroyed when the client times out, closes the channel, or closes the operation.
+Also when the server side forces channel closure via <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::ConnectOp::close</span></code>.
+The various *Close callbacks may also be used if explicit cleanup is needed on
+certain conditions.</p>
+</section>
+<section id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this heading">¶</a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6SourceE">
+<span id="_CPPv3N4pvxs6server6SourceE"></span><span id="_CPPv2N4pvxs6server6SourceE"></span><span id="pvxs::server::Source"></span><span class="target" id="structpvxs_1_1server_1_1Source"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Source</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6SourceE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Interface through which a <a class="reference internal" href="server.html#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> discovers Channel names and associates with Handler instances.</p>
+<p>User code will sub-class. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source8onSearchER6Search">
+<span id="_CPPv3N4pvxs6server6Source8onSearchER6Search"></span><span id="_CPPv2N4pvxs6server6Source8onSearchER6Search"></span><span id="pvxs::server::Source::onSearch__SearchR"></span><span class="target" id="structpvxs_1_1server_1_1Source_1ac8dab7f165f0f67c69039f8ec6e4b4c9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onSearch</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs6server6Source6SearchE" title="pvxs::server::Source::Search"><span class="n"><span class="pre">Search</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">op</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source8onSearchER6Search" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Called each time a client polls for the existence of some Channel names (<a class="reference internal" href="#classpvxs_1_1server_1_1Source_1_1Search_1_1Name"><span class="std std-ref">Search::Name</span></a>).</p>
+<p>A <a class="reference internal" href="#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> may only <a class="reference internal" href="#classpvxs_1_1server_1_1Source_1_1Search_1_1Name_1ab29923b3cccaa068b35e0d4411fdb758"><span class="std std-ref">Search::Name::claim()</span></a> a Channel name if it is prepared to immediately accept an <a class="reference internal" href="#structpvxs_1_1server_1_1Source_1af32e5b70c2cb0ecc1a2d73cb356bd8fd"><span class="std std-ref">onCreate()</span></a> call for that Channel name. In other situations it should wait for the client to retry. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source8onCreateERRNSt10unique_ptrI14ChannelControlEE">
+<span id="_CPPv3N4pvxs6server6Source8onCreateERRNSt10unique_ptrI14ChannelControlEE"></span><span id="_CPPv2N4pvxs6server6Source8onCreateERRNSt10unique_ptrI14ChannelControlEE"></span><span id="pvxs::server::Source::onCreate__std::unique_ptr:ChannelControl:RR"></span><span class="target" id="structpvxs_1_1server_1_1Source_1af32e5b70c2cb0ecc1a2d73cb356bd8fd"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onCreate</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server14ChannelControlE" title="pvxs::server::ChannelControl"><span class="n"><span class="pre">ChannelControl</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">op</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source8onCreateERRNSt10unique_ptrI14ChannelControlEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A Client is attempting to open a connection to a certain Channel.</p>
+<p>This Channel name may not be one which was seen or claimed by <a class="reference internal" href="#structpvxs_1_1server_1_1Source_1ac8dab7f165f0f67c69039f8ec6e4b4c9"><span class="std std-ref">onSearch()</span></a>.</p>
+<p>Callee may:</p>
+<p><ul class="simple">
+<li><p>Do nothing, allowing some other <a class="reference internal" href="#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> with higher/later order a chance to create.</p></li>
+<li><p>Call <a class="reference internal" href="#structpvxs_1_1server_1_1ChannelControl_1a69004a9c16fbe7a0fd7c30d5577301a8"><span class="std std-ref">ChannelControl::close()</span></a> to explicitly reject the channel.</p></li>
+<li><p>std::move() the op and/or call ChannelControl::setHandler() to accept the new channel.</p></li>
+<li><p>std::move() the op and allow <a class="reference internal" href="#structpvxs_1_1server_1_1ChannelControl"><span class="std std-ref">ChannelControl</span></a> to be destroyed to implicitly reject the channel. </p></li>
+</ul>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source6onListEv">
+<span id="_CPPv3N4pvxs6server6Source6onListEv"></span><span id="_CPPv2N4pvxs6server6Source6onListEv"></span><span id="pvxs::server::Source::onList"></span><span class="target" id="structpvxs_1_1server_1_1Source_1ad8e1f92c671566b502723612d66476d2"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6Source4ListE" title="pvxs::server::Source::List"><span class="n"><span class="pre">List</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onList</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source6onListEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A Client is requesting a list of Channel names which we may claim. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source4showERNSt7ostreamE">
+<span id="_CPPv3N4pvxs6server6Source4showERNSt7ostreamE"></span><span id="_CPPv2N4pvxs6server6Source4showERNSt7ostreamE"></span><span id="pvxs::server::Source::show__osR"></span><span class="target" id="structpvxs_1_1server_1_1Source_1a2df6ca4a0aa65fdd845b9096972392d8"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">show</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">strm</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source4showERNSt7ostreamE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Print status information. </p>
+</dd></dl>
+
+</div>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source4ListE">
+<span id="_CPPv3N4pvxs6server6Source4ListE"></span><span id="_CPPv2N4pvxs6server6Source4ListE"></span><span id="pvxs::server::Source::List"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1List"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">List</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source4ListE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#structpvxs_1_1server_1_1Source_1_1List"><span class="std std-ref">List</span></a> of channel names. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source4List5namesE">
+<span id="_CPPv3N4pvxs6server6Source4List5namesE"></span><span id="_CPPv2N4pvxs6server6Source4List5namesE"></span><span id="pvxs::server::Source::List::names__std::shared_ptr:std::set:ss:C:"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1List_1a170d4fb14f460ff0e908e8b98b87e8b8"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">set</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">names</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source4List5namesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The list. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source4List7dynamicE">
+<span id="_CPPv3N4pvxs6server6Source4List7dynamicE"></span><span id="_CPPv2N4pvxs6server6Source4List7dynamicE"></span><span id="pvxs::server::Source::List::dynamic__b"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1List_1a8a83aa18fc2f839fe26ce179e707338f"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">dynamic</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source4List7dynamicE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>True if the list may change at some future time. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source6SearchE">
+<span id="_CPPv3N4pvxs6server6Source6SearchE"></span><span id="_CPPv2N4pvxs6server6Source6SearchE"></span><span id="pvxs::server::Source::Search"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1Search"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Search</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source6SearchE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An iterable of names (<a class="reference internal" href="#classpvxs_1_1server_1_1Source_1_1Search_1_1Name"><span class="std std-ref">Name</span></a>) being sought.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">virtual</span> <span class="n">void</span> <span class="n">onSearch</span><span class="p">(</span><span class="n">Search</span><span class="o">&amp;</span> <span class="n">search</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">for</span><span class="p">(</span><span class="n">auto</span><span class="o">&amp;</span> <span class="n">op</span> <span class="p">:</span> <span class="n">search</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span> <span class="s2">&quot;magic&quot;</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">op</span><span class="o">.</span><span class="n">claim</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+ </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Source6Search4sizeEv">
+<span id="_CPPv3NK4pvxs6server6Source6Search4sizeEv"></span><span id="_CPPv2NK4pvxs6server6Source6Search4sizeEv"></span><span id="pvxs::server::Source::Search::sizeC"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1Search_1adba7a08c2a738d80ad8379b431c8121a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Source6Search4sizeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of names. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source6Search5beginEv">
+<span id="_CPPv3N4pvxs6server6Source6Search5beginEv"></span><span id="_CPPv2N4pvxs6server6Source6Search5beginEv"></span><span id="pvxs::server::Source::Search::begin"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1Search_1a4e9bcb7be020e5e958c066e28741b03a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">iterator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">begin</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source6Search5beginEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Begin iterator of <a class="reference internal" href="#classpvxs_1_1server_1_1Source_1_1Search_1_1Name"><span class="std std-ref">Name</span></a> instances. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source6Search3endEv">
+<span id="_CPPv3N4pvxs6server6Source6Search3endEv"></span><span id="_CPPv2N4pvxs6server6Source6Search3endEv"></span><span id="pvxs::server::Source::Search::end"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1Search_1a7290dc8c7ab3436a99f46c7a813d4fd1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">iterator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">end</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source6Search3endEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>End iterator of <a class="reference internal" href="#classpvxs_1_1server_1_1Source_1_1Search_1_1Name"><span class="std std-ref">Name</span></a> instances. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Source6Search6sourceEv">
+<span id="_CPPv3NK4pvxs6server6Source6Search6sourceEv"></span><span id="_CPPv2NK4pvxs6server6Source6Search6sourceEv"></span><span id="pvxs::server::Source::Search::sourceC"></span><span class="target" id="structpvxs_1_1server_1_1Source_1_1Search_1aa1ff413e77579778f14c45503ee48301"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">source</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Source6Search6sourceEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Client endpoint address. </p>
+</dd></dl>
+
+</div>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source6Search4NameE">
+<span id="_CPPv3N4pvxs6server6Source6Search4NameE"></span><span id="_CPPv2N4pvxs6server6Source6Search4NameE"></span><span id="pvxs::server::Source::Search::Name"></span><span class="target" id="classpvxs_1_1server_1_1Source_1_1Search_1_1Name"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Name</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source6Search4NameE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A single name being searched. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Source6Search4Name4nameEv">
+<span id="_CPPv3NK4pvxs6server6Source6Search4Name4nameEv"></span><span id="_CPPv2NK4pvxs6server6Source6Search4Name4nameEv"></span><span id="pvxs::server::Source::Search::Name::nameC"></span><span class="target" id="classpvxs_1_1server_1_1Source_1_1Search_1_1Name_1a2a7f1e08b3bc32c88b57b3fd1ed46a3f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Source6Search4Name4nameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Channel name. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Source6Search4Name5claimEv">
+<span id="_CPPv3N4pvxs6server6Source6Search4Name5claimEv"></span><span id="_CPPv2N4pvxs6server6Source6Search4Name5claimEv"></span><span id="pvxs::server::Source::Search::Name::claim"></span><span class="target" id="classpvxs_1_1server_1_1Source_1_1Search_1_1Name_1ab29923b3cccaa068b35e0d4411fdb758"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">claim</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Source6Search4Name5claimEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The caller claims to be able to respond to an <a class="reference internal" href="#structpvxs_1_1server_1_1Source_1af32e5b70c2cb0ecc1a2d73cb356bd8fd"><span class="std std-ref">onCreate()</span></a> for this name. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6OpBaseE">
+<span id="_CPPv3N4pvxs6server6OpBaseE"></span><span id="_CPPv2N4pvxs6server6OpBaseE"></span><span id="pvxs::server::OpBase"></span><span class="target" id="structpvxs_1_1server_1_1OpBase"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">OpBase</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6OpBaseE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Base for all operation classes. </p>
+<p>Subclassed by <a class="reference internal" href="#structpvxs_1_1server_1_1ChannelControl"><span class="std std-ref">pvxs::server::ChannelControl</span></a>, <a class="reference internal" href="#structpvxs_1_1server_1_1ConnectOp"><span class="std std-ref">pvxs::server::ConnectOp</span></a>, <a class="reference internal" href="#structpvxs_1_1server_1_1ExecOp"><span class="std std-ref">pvxs::server::ExecOp</span></a>, <a class="reference internal" href="#structpvxs_1_1server_1_1MonitorControlOp"><span class="std std-ref">pvxs::server::MonitorControlOp</span></a>, <a class="reference internal" href="#structpvxs_1_1server_1_1MonitorSetupOp"><span class="std std-ref">pvxs::server::MonitorSetupOp</span></a></p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6OpBase8peerNameEv">
+<span id="_CPPv3NK4pvxs6server6OpBase8peerNameEv"></span><span id="_CPPv2NK4pvxs6server6OpBase8peerNameEv"></span><span id="pvxs::server::OpBase::peerNameC"></span><span class="target" id="structpvxs_1_1server_1_1OpBase_1ac67be1f1baa875627e43aa8132f6f0eb"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">peerName</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6OpBase8peerNameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Client endpoint address in “X.X.X.X:Y” format. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6OpBase4nameEv">
+<span id="_CPPv3NK4pvxs6server6OpBase4nameEv"></span><span id="_CPPv2NK4pvxs6server6OpBase4nameEv"></span><span id="pvxs::server::OpBase::nameC"></span><span class="target" id="structpvxs_1_1server_1_1OpBase_1a35a4276841c8b11179175aa007e30381"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6OpBase4nameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The Channel name. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6OpBase11credentialsEv">
+<span id="_CPPv3NK4pvxs6server6OpBase11credentialsEv"></span><span id="_CPPv2NK4pvxs6server6OpBase11credentialsEv"></span><span id="pvxs::server::OpBase::credentialsC"></span><span class="target" id="structpvxs_1_1server_1_1OpBase_1a7982201518beadf1646770b9273f12c0"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server17ClientCredentialsE" title="pvxs::server::ClientCredentials"><span class="n"><span class="pre">ClientCredentials</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">credentials</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6OpBase11credentialsEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Client credentials. Never NULL. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6OpBase2opEv">
+<span id="_CPPv3NK4pvxs6server6OpBase2opEv"></span><span id="_CPPv2NK4pvxs6server6OpBase2opEv"></span><span id="pvxs::server::OpBase::opC"></span><span class="target" id="structpvxs_1_1server_1_1OpBase_1afca9b719c12810a809cabfcfdf2e7049"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">op_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">op</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6OpBase2opEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Operation type. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ExecOpE">
+<span id="_CPPv3N4pvxs6server6ExecOpE"></span><span id="_CPPv2N4pvxs6server6ExecOpE"></span><span id="pvxs::server::ExecOp"></span><span class="target" id="structpvxs_1_1server_1_1ExecOp"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ExecOp</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6OpBaseE" title="pvxs::server::OpBase"><span class="n"><span class="pre">OpBase</span></span></a><a class="headerlink" href="#_CPPv4N4pvxs6server6ExecOpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle when an operation is being executed. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ExecOp5replyEv">
+<span id="_CPPv3N4pvxs6server6ExecOp5replyEv"></span><span id="_CPPv2N4pvxs6server6ExecOp5replyEv"></span><span id="pvxs::server::ExecOp::reply"></span><span class="target" id="structpvxs_1_1server_1_1ExecOp_1a2091da72f4d9b6a05491c29fb536b58a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">reply</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6ExecOp5replyEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Issue a reply without data. (eg. to complete a PUT) </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ExecOp5replyERK5Value">
+<span id="_CPPv3N4pvxs6server6ExecOp5replyERK5Value"></span><span id="_CPPv2N4pvxs6server6ExecOp5replyERK5Value"></span><span id="pvxs::server::ExecOp::reply__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1ExecOp_1ae473fa8c266b49f129d4079c50aabde9"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">reply</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6ExecOp5replyERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Issue a reply with data. For a GET or RPC (or PUT/Get) </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ExecOp5errorERKNSt6stringE">
+<span id="_CPPv3N4pvxs6server6ExecOp5errorERKNSt6stringE"></span><span id="_CPPv2N4pvxs6server6ExecOp5errorERKNSt6stringE"></span><span id="pvxs::server::ExecOp::error__ssCR"></span><span class="target" id="structpvxs_1_1server_1_1ExecOp_1ab596aa92485721150f94b708fa500d90"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">error</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">msg</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6ExecOp5errorERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Indicate the request has resulted in an error. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.2.3 Does not block </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ExecOp8onCancelERRNSt8functionIFvvEEE">
+<span id="_CPPv3N4pvxs6server6ExecOp8onCancelERRNSt8functionIFvvEEE"></span><span id="_CPPv2N4pvxs6server6ExecOp8onCancelERRNSt8functionIFvvEEE"></span><span class="target" id="structpvxs_1_1server_1_1ExecOp_1a150cd04442ec5e2b5e39a89d98911b4a"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onCancel</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6ExecOp8onCancelERRNSt8functionIFvvEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback invoked if the peer cancels the operation before <a class="reference internal" href="#structpvxs_1_1server_1_1ExecOp_1a2091da72f4d9b6a05491c29fb536b58a"><span class="std std-ref">reply()</span></a> or <a class="reference internal" href="#structpvxs_1_1server_1_1ExecOp_1ab596aa92485721150f94b708fa500d90"><span class="std std-ref">error()</span></a> is called. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6ExecOp9pvRequestEv">
+<span id="_CPPv3NK4pvxs6server6ExecOp9pvRequestEv"></span><span id="_CPPv2NK4pvxs6server6ExecOp9pvRequestEv"></span><span id="pvxs::server::ExecOp::pvRequestC"></span><span class="target" id="structpvxs_1_1server_1_1ExecOp_1a33d256113e62640af754201d62376e6e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">pvRequest</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6ExecOp9pvRequestEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Access to pvRequest blob <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server9ConnectOpE">
+<span id="_CPPv3N4pvxs6server9ConnectOpE"></span><span id="_CPPv2N4pvxs6server9ConnectOpE"></span><span id="pvxs::server::ConnectOp"></span><span class="target" id="structpvxs_1_1server_1_1ConnectOp"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ConnectOp</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6OpBaseE" title="pvxs::server::OpBase"><span class="n"><span class="pre">OpBase</span></span></a><a class="headerlink" href="#_CPPv4N4pvxs6server9ConnectOpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle when an operation is being setup. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server9ConnectOp7connectERK5Value">
+<span id="_CPPv3N4pvxs6server9ConnectOp7connectERK5Value"></span><span id="_CPPv2N4pvxs6server9ConnectOp7connectERK5Value"></span><span id="pvxs::server::ConnectOp::connect__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1ConnectOp_1a790ea4eac379e78b6d8e7dc3daa1a91f"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">connect</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">prototype</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server9ConnectOp7connectERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>For GET_FIELD, GET, or PUT. Inform peer of our data-type. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Throws<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span></span></span> – if the client pvRequest() field mask does not select any fields of prototype. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server9ConnectOp5errorERKNSt6stringE">
+<span id="_CPPv3N4pvxs6server9ConnectOp5errorERKNSt6stringE"></span><span id="_CPPv2N4pvxs6server9ConnectOp5errorERKNSt6stringE"></span><span id="pvxs::server::ConnectOp::error__ssCR"></span><span class="target" id="structpvxs_1_1server_1_1ConnectOp_1a97a27ebf32ccb67890bb759c2ef5e289"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">error</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">msg</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server9ConnectOp5errorERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Indicate that this operation can not be setup <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.2.3 Does not block </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server9ConnectOp5onGetERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEEEEE">
+<span id="_CPPv3N4pvxs6server9ConnectOp5onGetERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEEEEE"></span><span id="_CPPv2N4pvxs6server9ConnectOp5onGetERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEEEEE"></span><span class="target" id="structpvxs_1_1server_1_1ConnectOp_1a28f3643d9e50818ba7a28c517cb523c7"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onGet</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ExecOpE" title="pvxs::server::ExecOp"><span class="n"><span class="pre">ExecOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server9ConnectOp5onGetERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEEEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handler invoked when a peer executes a request for data on a GET o PUT. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server9ConnectOp5onPutERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE">
+<span id="_CPPv3N4pvxs6server9ConnectOp5onPutERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span id="_CPPv2N4pvxs6server9ConnectOp5onPutERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span class="target" id="structpvxs_1_1server_1_1ConnectOp_1aacb28c6e0945590c11321236489aacc2"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onPut</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ExecOpE" title="pvxs::server::ExecOp"><span class="n"><span class="pre">ExecOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server9ConnectOp5onPutERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handler invoked when a peer executes a send data on a PUT. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server9ConnectOp7onCloseERRNSt8functionIFvRKNSt6stringEEEE">
+<span id="_CPPv3N4pvxs6server9ConnectOp7onCloseERRNSt8functionIFvRKNSt6stringEEEE"></span><span id="_CPPv2N4pvxs6server9ConnectOp7onCloseERRNSt8functionIFvRKNSt6stringEEEE"></span><span class="target" id="structpvxs_1_1server_1_1ConnectOp_1addab31d0a076c9baef0d19cf27caf201"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onClose</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server9ConnectOp7onCloseERRNSt8functionIFvRKNSt6stringEEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when the underlying channel closes. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOpE">
+<span id="_CPPv3N4pvxs6server16MonitorControlOpE"></span><span id="_CPPv2N4pvxs6server16MonitorControlOpE"></span><span id="pvxs::server::MonitorControlOp"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MonitorControlOp</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6OpBaseE" title="pvxs::server::OpBase"><span class="n"><span class="pre">OpBase</span></span></a><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle for active subscription. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOp9forcePostERK5Value">
+<span id="_CPPv3N4pvxs6server16MonitorControlOp9forcePostERK5Value"></span><span id="_CPPv2N4pvxs6server16MonitorControlOp9forcePostERK5Value"></span><span id="pvxs::server::MonitorControlOp::forcePost__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1a4c27f2db5cd81285c6b78ab4ee371a12"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">forcePost</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOp9forcePostERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a new entry to the monitor queue. If nFree()&lt;=0 the output queue will be over-filled with this element. Returns <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nFree</span><span class="p">()</span><span class="o">&gt;</span><span class="mi">0</span><span class="n">u</span> 
+</pre></div>
+</div>
+ </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Caller must not modify the <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> </p>
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOp4postERK5Value">
+<span id="_CPPv3N4pvxs6server16MonitorControlOp4postERK5Value"></span><span id="_CPPv2N4pvxs6server16MonitorControlOp4postERK5Value"></span><span id="pvxs::server::MonitorControlOp::post__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1a16f031d841e1803b3ac8a2674570fe0d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">post</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOp4postERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a new entry to the monitor queue. If nFree()&lt;=0 this element will be “squashed” to the last element in the queue Returns <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nFree</span><span class="p">()</span><span class="o">&gt;</span><span class="mi">0</span><span class="n">u</span> 
+</pre></div>
+</div>
+ </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Caller must not modify the <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> </p>
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOp7tryPostERK5Value">
+<span id="_CPPv3N4pvxs6server16MonitorControlOp7tryPostERK5Value"></span><span id="_CPPv2N4pvxs6server16MonitorControlOp7tryPostERK5Value"></span><span id="pvxs::server::MonitorControlOp::tryPost__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1a59befc2065ff716a65be9829ab25f56f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tryPost</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOp7tryPostERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a new entry to the monitor queue. If nFree()&lt;=0 return false and take no other action Returns <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nFree</span><span class="p">()</span><span class="o">&gt;</span><span class="mi">0</span><span class="n">u</span> 
+</pre></div>
+</div>
+ </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Caller must not modify the <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> </p>
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOp6finishEv">
+<span id="_CPPv3N4pvxs6server16MonitorControlOp6finishEv"></span><span id="_CPPv2N4pvxs6server16MonitorControlOp6finishEv"></span><span id="pvxs::server::MonitorControlOp::finish"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1a51da340b5500c584e79fb6dbda22e350"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">finish</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOp6finishEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Signal to subscriber that this subscription will not yield any further events. This is not an error. Client should not retry. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server16MonitorControlOp5statsER11MonitorStatb">
+<span id="_CPPv3NK4pvxs6server16MonitorControlOp5statsER11MonitorStatb"></span><span id="_CPPv2NK4pvxs6server16MonitorControlOp5statsER11MonitorStatb"></span><span id="pvxs::server::MonitorControlOp::stats__MonitorStatR.bC"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1a13e8c1b84d147e6767c1205853a7c61f"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">stats</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs6server11MonitorStatE" title="pvxs::server::MonitorStat"><span class="n"><span class="pre">MonitorStat</span></span></a><span class="p"><span class="pre">&amp;</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reset</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server16MonitorControlOp5statsER11MonitorStatb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Poll information and statistics for this subscription. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.1.0 Added ‘reset’ argument. </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOp13setWatermarksE6size_t6size_t">
+<span id="_CPPv3N4pvxs6server16MonitorControlOp13setWatermarksE6size_t6size_t"></span><span id="_CPPv2N4pvxs6server16MonitorControlOp13setWatermarksE6size_t6size_t"></span><span id="pvxs::server::MonitorControlOp::setWatermarks__s.s"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1a41f9a6c79276be33910032e9e3869c7b"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setWatermarks</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">low</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">high</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOp13setWatermarksE6size_t6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Set flow control levels.</p>
+<p>Flow control operations against an outbound “window” size, which is the number of updates which may be sent before a client ack. must be received. By default both high and low levels are zero.</p>
+<p>onLowMark callback is not currently implemented and the ‘low’ level is not used. onHighMark callback will be invoked when a client ack. is received and the window size is above (&gt;) ‘high’. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server16MonitorControlOp7onStartERRNSt8functionIFvbEEE">
+<span id="_CPPv3N4pvxs6server16MonitorControlOp7onStartERRNSt8functionIFvbEEE"></span><span id="_CPPv2N4pvxs6server16MonitorControlOp7onStartERRNSt8functionIFvbEEE"></span><span class="target" id="structpvxs_1_1server_1_1MonitorControlOp_1ac7ee9e8c8b9a999f82bd386a884f2ebf"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onStart</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n"><span class="pre">start</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server16MonitorControlOp7onStartERRNSt8functionIFvbEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when client resumes/pauses updates. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14MonitorSetupOpE">
+<span id="_CPPv3N4pvxs6server14MonitorSetupOpE"></span><span id="_CPPv2N4pvxs6server14MonitorSetupOpE"></span><span id="pvxs::server::MonitorSetupOp"></span><span class="target" id="structpvxs_1_1server_1_1MonitorSetupOp"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MonitorSetupOp</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6OpBaseE" title="pvxs::server::OpBase"><span class="n"><span class="pre">OpBase</span></span></a><a class="headerlink" href="#_CPPv4N4pvxs6server14MonitorSetupOpE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle for subscription which is being setup. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14MonitorSetupOp7connectERK5Value">
+<span id="_CPPv3N4pvxs6server14MonitorSetupOp7connectERK5Value"></span><span id="_CPPv2N4pvxs6server14MonitorSetupOp7connectERK5Value"></span><span id="pvxs::server::MonitorSetupOp::connect__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1MonitorSetupOp_1a4957c9de0705f8b9d7dcff35cdb6d6cf"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server16MonitorControlOpE" title="pvxs::server::MonitorControlOp"><span class="n"><span class="pre">MonitorControlOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">connect</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">prototype</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14MonitorSetupOp7connectERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Inform peer of our data-type and acquire control of subscription queue. The queue is initially stopped. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Throws<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span></span></span> – if the client pvRequest() field mask does not select any fields of prototype. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14MonitorSetupOp5errorERKNSt6stringE">
+<span id="_CPPv3N4pvxs6server14MonitorSetupOp5errorERKNSt6stringE"></span><span id="_CPPv2N4pvxs6server14MonitorSetupOp5errorERKNSt6stringE"></span><span id="pvxs::server::MonitorSetupOp::error__ssCR"></span><span class="target" id="structpvxs_1_1server_1_1MonitorSetupOp_1a4cb6ff3c4c759283fb4e678718d0854e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">error</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">msg</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14MonitorSetupOp5errorERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Indicate that this operation can not be setup <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.2.3 Does not block </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14ChannelControlE">
+<span id="_CPPv3N4pvxs6server14ChannelControlE"></span><span id="_CPPv2N4pvxs6server14ChannelControlE"></span><span id="pvxs::server::ChannelControl"></span><span class="target" id="structpvxs_1_1server_1_1ChannelControl"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ChannelControl</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">server</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6OpBaseE" title="pvxs::server::OpBase"><span class="n"><span class="pre">OpBase</span></span></a><a class="headerlink" href="#_CPPv4N4pvxs6server14ChannelControlE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Manipulate an active Channel, and any in-progress Operations through it. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14ChannelControl4onOpERRNSt8functionIFvRRNSt10unique_ptrI9ConnectOpEEEEE">
+<span id="_CPPv3N4pvxs6server14ChannelControl4onOpERRNSt8functionIFvRRNSt10unique_ptrI9ConnectOpEEEEE"></span><span id="_CPPv2N4pvxs6server14ChannelControl4onOpERRNSt8functionIFvRRNSt10unique_ptrI9ConnectOpEEEEE"></span><span class="target" id="structpvxs_1_1server_1_1ChannelControl_1ad2b71478ed9883383c2827cca3623358"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onOp</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server9ConnectOpE" title="pvxs::server::ConnectOp"><span class="n"><span class="pre">ConnectOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14ChannelControl4onOpERRNSt8functionIFvRRNSt10unique_ptrI9ConnectOpEEEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Invoked when a new GET or PUT Operation is requested through this Channel. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14ChannelControl5onRPCERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE">
+<span id="_CPPv3N4pvxs6server14ChannelControl5onRPCERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span id="_CPPv2N4pvxs6server14ChannelControl5onRPCERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span class="target" id="structpvxs_1_1server_1_1ChannelControl_1a0feabcea77d32e8b8a44d21699660b5e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onRPC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ExecOpE" title="pvxs::server::ExecOp"><span class="n"><span class="pre">ExecOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14ChannelControl5onRPCERRNSt8functionIFvRRNSt10unique_ptrI6ExecOpEERR5ValueEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Invoked when the peer executes an RPC. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14ChannelControl11onSubscribeERRNSt8functionIFvRRNSt10unique_ptrI14MonitorSetupOpEEEEE">
+<span id="_CPPv3N4pvxs6server14ChannelControl11onSubscribeERRNSt8functionIFvRRNSt10unique_ptrI14MonitorSetupOpEEEEE"></span><span id="_CPPv2N4pvxs6server14ChannelControl11onSubscribeERRNSt8functionIFvRRNSt10unique_ptrI14MonitorSetupOpEEEEE"></span><span class="target" id="structpvxs_1_1server_1_1ChannelControl_1a060392a6aec4d3b9b5233d0b659c9186"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onSubscribe</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server14MonitorSetupOpE" title="pvxs::server::MonitorSetupOp"><span class="n"><span class="pre">MonitorSetupOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14ChannelControl11onSubscribeERRNSt8functionIFvRRNSt10unique_ptrI14MonitorSetupOpEEEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Invoked when the peer create a new subscription. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14ChannelControl7onCloseERRNSt8functionIFvRKNSt6stringEEEE">
+<span id="_CPPv3N4pvxs6server14ChannelControl7onCloseERRNSt8functionIFvRKNSt6stringEEEE"></span><span id="_CPPv2N4pvxs6server14ChannelControl7onCloseERRNSt8functionIFvRKNSt6stringEEEE"></span><span class="target" id="structpvxs_1_1server_1_1ChannelControl_1aff938254f224035469482b3de64d8bf1"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onClose</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14ChannelControl7onCloseERRNSt8functionIFvRKNSt6stringEEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when the channel closes (eg. peer disconnect) </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server14ChannelControl5closeEv">
+<span id="_CPPv3N4pvxs6server14ChannelControl5closeEv"></span><span id="_CPPv2N4pvxs6server14ChannelControl5closeEv"></span><span id="pvxs::server::ChannelControl::close"></span><span class="target" id="structpvxs_1_1server_1_1ChannelControl_1a69004a9c16fbe7a0fd7c30d5577301a8"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">close</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server14ChannelControl5closeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Force disconnection If called from outside a handler method, blocks until in-progress Handler methods have returned. Reference to currently attached Handler is released. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server11MonitorStatE">
+<span id="_CPPv3N4pvxs6server11MonitorStatE"></span><span id="_CPPv2N4pvxs6server11MonitorStatE"></span><span id="pvxs::server::MonitorStat"></span><span class="target" id="structpvxs_1_1server_1_1MonitorStat"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MonitorStat</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server11MonitorStatE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Information about a running monitor. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server11MonitorStat6windowE">
+<span id="_CPPv3N4pvxs6server11MonitorStat6windowE"></span><span id="_CPPv2N4pvxs6server11MonitorStat6windowE"></span><span id="pvxs::server::MonitorStat::window__s"></span><span class="target" id="structpvxs_1_1server_1_1MonitorStat_1ad333bc283b0995a7dc7db50fdf7bcd6e"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">window</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server11MonitorStat6windowE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of available elements in the output flow window. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server11MonitorStat6nQueueE">
+<span id="_CPPv3N4pvxs6server11MonitorStat6nQueueE"></span><span id="_CPPv2N4pvxs6server11MonitorStat6nQueueE"></span><span id="pvxs::server::MonitorStat::nQueue__s"></span><span class="target" id="structpvxs_1_1server_1_1MonitorStat_1a67f635261d630f589a796db5eccc80a0"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nQueue</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server11MonitorStat6nQueueE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of un-sent updates in the local queue. Doesn’t include updates serialized and in the TX buffer. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server11MonitorStat8maxQueueE">
+<span id="_CPPv3N4pvxs6server11MonitorStat8maxQueueE"></span><span id="_CPPv2N4pvxs6server11MonitorStat8maxQueueE"></span><span id="pvxs::server::MonitorStat::maxQueue__s"></span><span class="target" id="structpvxs_1_1server_1_1MonitorStat_1a5b233aa8b7b197b1a6f34654b9db8636"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">maxQueue</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server11MonitorStat8maxQueueE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Highest value of nQueue seen <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.1.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server11MonitorStat10limitQueueE">
+<span id="_CPPv3N4pvxs6server11MonitorStat10limitQueueE"></span><span id="_CPPv2N4pvxs6server11MonitorStat10limitQueueE"></span><span id="pvxs::server::MonitorStat::limitQueue__s"></span><span class="target" id="structpvxs_1_1server_1_1MonitorStat_1ab92135d8090730244859a86c4872652f"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">limitQueue</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server11MonitorStat10limitQueueE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Negotiated limit on nQueue. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server11MonitorStat7nSquashE">
+<span id="_CPPv3N4pvxs6server11MonitorStat7nSquashE"></span><span id="_CPPv2N4pvxs6server11MonitorStat7nSquashE"></span><span id="pvxs::server::MonitorStat::nSquash__s"></span><span class="target" id="structpvxs_1_1server_1_1MonitorStat_1aa29e8eab38ee72e8c317dbdead796dfb"></span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nSquash</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server11MonitorStat7nSquashE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of updates squashed during post() calls <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server17ClientCredentialsE">
+<span id="_CPPv3N4pvxs6server17ClientCredentialsE"></span><span id="_CPPv2N4pvxs6server17ClientCredentialsE"></span><span id="pvxs::server::ClientCredentials"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ClientCredentials</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server17ClientCredentialsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Credentials presented by a client.</p>
+<p>Primarily a way of presenting peer address and a remote user account name. The method gives the authentication sub-protocol used and is presently one of:</p>
+<p><ul class="simple">
+<li><p>“ca” - Client provided account name.</p></li>
+<li><p>”anonymous” - Client provided no credentials. account will also be “anonymous”.</p></li>
+</ul>
+</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server17ClientCredentials5rolesEv">
+<span id="_CPPv3NK4pvxs6server17ClientCredentials5rolesEv"></span><span id="_CPPv2NK4pvxs6server17ClientCredentials5rolesEv"></span><span id="pvxs::server::ClientCredentials::rolesC"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials_1a0e5209a7f74e3d7cc47cd3480f4eb313"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">set</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">roles</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server17ClientCredentials5rolesEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Lookup (locally) roles associated with the account.</p>
+<p>On *nix targets this is the list of primary and secondary groups in with the account is a member. On Windows targets this returns the list of local groups for the account. On other targets, an empty list is returned. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server17ClientCredentials4peerE">
+<span id="_CPPv3N4pvxs6server17ClientCredentials4peerE"></span><span id="_CPPv2N4pvxs6server17ClientCredentials4peerE"></span><span id="pvxs::server::ClientCredentials::peer__ss"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials_1af196447289c8795cc97e5522bb094465"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">peer</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server17ClientCredentials4peerE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Peer address (eg. numeric IPv4) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server17ClientCredentials5ifaceE">
+<span id="_CPPv3N4pvxs6server17ClientCredentials5ifaceE"></span><span id="_CPPv2N4pvxs6server17ClientCredentials5ifaceE"></span><span id="pvxs::server::ClientCredentials::iface__ss"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials_1a297e7aed6c3019a95fa513e9e169ece0"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">iface</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server17ClientCredentials5ifaceE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The local interface address (eg. numeric IPv4) through which this client is connected. May be a wildcard address (eg. 0.0.0.0) if the receiving socket is so bound. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server17ClientCredentials6methodE">
+<span id="_CPPv3N4pvxs6server17ClientCredentials6methodE"></span><span id="_CPPv2N4pvxs6server17ClientCredentials6methodE"></span><span id="pvxs::server::ClientCredentials::method__ss"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials_1a110d1374e48196bb92bf7ca2d87893d9"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">method</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server17ClientCredentials6methodE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Authentication “method”. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server17ClientCredentials7accountE">
+<span id="_CPPv3N4pvxs6server17ClientCredentials7accountE"></span><span id="_CPPv2N4pvxs6server17ClientCredentials7accountE"></span><span id="pvxs::server::ClientCredentials::account__ss"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials_1a376056f5fdc1df8a02b6af1fd816a1cf"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">account</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server17ClientCredentials7accountE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Remote user account name. Meaning depends upon method. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server17ClientCredentials3rawE">
+<span id="_CPPv3N4pvxs6server17ClientCredentials3rawE"></span><span id="_CPPv2N4pvxs6server17ClientCredentials3rawE"></span><span id="pvxs::server::ClientCredentials::raw__Value"></span><span class="target" id="structpvxs_1_1server_1_1ClientCredentials_1a0bf76e9981ea25d642f0e3878dcc2360"></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">raw</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server17ClientCredentials3rawE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>(Copy of) Credentials blob as presented by the client. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="server.html">Server API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="sharedpv.html">SharedPV and StaticSource</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Data Source</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#threading">Threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ownership-and-lifetime">Ownership and Lifetime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#configuration">Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="server.html">Server API</a><ul>
+      <li>Previous: <a href="sharedpv.html" title="previous chapter">SharedPV and StaticSource</a></li>
+      <li>Next: <a href="ioc.html" title="next chapter">IOC Integration</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/source.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

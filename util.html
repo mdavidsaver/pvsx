@@ -1,0 +1,821 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Misc &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Details" href="details.html" />
+    <link rel="prev" title="PVA Links" href="pvalink.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="misc">
+<h1>Misc<a class="headerlink" href="#misc" title="Permalink to this heading">¶</a></h1>
+<section id="logging">
+<h2>Logging<a class="headerlink" href="#logging" title="Permalink to this heading">¶</a></h2>
+<p>PVXS internally logs warning/status messages using errlog.h from EPICS Base.
+User applications may control which messages are printed, and may add output.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/log.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>Control of log message output is available through named loggers.
+All internal logger names begin with the prefix “pvxs.”.</p>
+<p>In addition to a name, each logger has an associated integer logging level.
+A message will be logged if the level of the message is less than or
+equal to the level of the associated logger.</p>
+<p>To enable all logging at full detail.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PVXS_LOG</span><span class="o">=</span><span class="s2">&quot;*=DEBUG&quot;</span>
+</pre></div>
+</div>
+<dl class="cpp enum-class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs5LevelE">
+<span id="_CPPv3N4pvxs5LevelE"></span><span id="_CPPv2N4pvxs5LevelE"></span><span class="target" id="namespacepvxs_1a2002ba833e9865a042be6648dc9f2a74"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">Level</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs5LevelE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Importance of message. </p>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs5Level5DebugE">
+<span id="_CPPv3N4pvxs5Level5DebugE"></span><span id="_CPPv2N4pvxs5Level5DebugE"></span><span class="target" id="namespacepvxs_1a2002ba833e9865a042be6648dc9f2a74aa603905470e2a5b8c13e96b579ef0dba"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Debug</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs5Level5DebugE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs5Level4InfoE">
+<span id="_CPPv3N4pvxs5Level4InfoE"></span><span id="_CPPv2N4pvxs5Level4InfoE"></span><span class="target" id="namespacepvxs_1a2002ba833e9865a042be6648dc9f2a74a4059b0251f66a18cb56f544728796875"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Info</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs5Level4InfoE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs5Level4WarnE">
+<span id="_CPPv3N4pvxs5Level4WarnE"></span><span id="_CPPv2N4pvxs5Level4WarnE"></span><span class="target" id="namespacepvxs_1a2002ba833e9865a042be6648dc9f2a74a56525ae64d370c0b448ac0d60710ef17"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Warn</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs5Level4WarnE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs5Level3ErrE">
+<span id="_CPPv3N4pvxs5Level3ErrE"></span><span id="_CPPv2N4pvxs5Level3ErrE"></span><span class="target" id="namespacepvxs_1a2002ba833e9865a042be6648dc9f2a74ab47f6a6092c5d7e4bffec12dff309c3b"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Err</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs5Level3ErrE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs5Level4CritE">
+<span id="_CPPv3N4pvxs5Level4CritE"></span><span id="_CPPv2N4pvxs5Level4CritE"></span><span class="target" id="namespacepvxs_1a2002ba833e9865a042be6648dc9f2a74a304c415e7242947be288863d75041ed9"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Crit</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs5Level4CritE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<section id="controlling-logging">
+<h3>Controlling Logging<a class="headerlink" href="#controlling-logging" title="Permalink to this heading">¶</a></h3>
+<p>By default, all loggers have level Err.
+It is recommended that user applications prefer configuration
+through the environment variable <strong>$PVXS_LOG</strong> by calling <a class="reference internal" href="#_CPPv4N4pvxs17logger_config_envEv" title="pvxs::logger_config_env"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::logger_config_env()</span></code></a>.</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs17logger_config_envEv">
+<span id="_CPPv3N4pvxs17logger_config_envEv"></span><span id="_CPPv2N4pvxs17logger_config_envEv"></span><span id="pvxs::logger_config_env"></span><span class="target" id="namespacepvxs_1af2bc724538957a4ec40b10714bece689"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">logger_config_env</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs17logger_config_envEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Configure logging from environment variable <strong>$PVXS_LOG</strong></p>
+<p><a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> of the form “key=VAL,…”</p>
+<p>Keys may be literal logger names, or may include ‘*’ wildcards to match multiple loggers. eg. “pvxs.*=DEBUG” will enable all internal log messages.</p>
+<p>VAL may be one of “CRIT”, “ERR”, “WARN”, “INFO”, or “DEBUG” </p>
+</dd></dl>
+
+<p>If this is undesirable, logger levels may be (reset) manually.</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs16logger_level_setEPKc5Level">
+<span id="_CPPv3N4pvxs16logger_level_setEPKc5Level"></span><span id="_CPPv2N4pvxs16logger_level_setEPKc5Level"></span><span id="pvxs::logger_level_set__cCP.Level"></span><span class="target" id="namespacepvxs_1a0e1536315b9291ae8b185e78ad4010f7"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">logger_level_set</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">name</span></span>, <a class="reference internal" href="#_CPPv4N4pvxs5LevelE" title="pvxs::Level"><span class="n"><span class="pre">Level</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">lvl</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs16logger_level_setEPKc5Level" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs18logger_level_clearEv">
+<span id="_CPPv3N4pvxs18logger_level_clearEv"></span><span id="_CPPv2N4pvxs18logger_level_clearEv"></span><span id="pvxs::logger_level_clear"></span><span class="target" id="namespacepvxs_1a70755c4835ab2262b3c59a2364836702"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">logger_level_clear</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs18logger_level_clearEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Remove any previously logger configurations. Does <em>not</em> change any <a class="reference internal" href="#structpvxs_1_1logger_1a3f166cbaec8e1f4ec940b14634635a91"><span class="std std-ref">logger::lvl</span></a> Use prior to re-applying new configuration. </p>
+</dd></dl>
+
+</section>
+<section id="logging-from-user-applications">
+<h3>Logging from User applications<a class="headerlink" href="#logging-from-user-applications" title="Permalink to this heading">¶</a></h3>
+<p>To emit log messages from user code, a new logger should be defined with <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">DEFINE_LOGGER</span></code>
+which will be usable within the current translation unit.
+It is allowable for multiple loggers to have the same name.</p>
+<p>Logger names beginning with “pvxs.*” is reserved for internal usage,
+and must not be present in user code.</p>
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.DEFINE_LOGGER">
+<span class="target" id="log_8h_1ae69702365be442df488ab0b567c2dbd2"></span><span class="sig-name descname"><span class="n"><span class="pre">DEFINE_LOGGER</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">VAR</span></span>, <span class="n"><span class="pre">NAME</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.DEFINE_LOGGER" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Define a new logger global. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>VAR</strong> – The (static) variable name passed to log_printf() and friends. </p></li>
+<li><p><strong>NAME</strong> – A name string in “A.B.C” form. </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.log_crit_printf">
+<span class="target" id="log_8h_1af4fc82d1246e68f21398d5238505e8fb"></span><span class="sig-name descname"><span class="n"><span class="pre">log_crit_printf</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LOGGER</span></span>, <span class="n"><span class="pre">FMT</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.log_crit_printf" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.log_err_printf">
+<span class="target" id="log_8h_1aac46c74e2596860d9be0c8d6a1baed8f"></span><span class="sig-name descname"><span class="n"><span class="pre">log_err_printf</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LOGGER</span></span>, <span class="n"><span class="pre">FMT</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.log_err_printf" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.log_warn_printf">
+<span class="target" id="log_8h_1a0de6e25341c1c80c5c2f0fd2628db7f2"></span><span class="sig-name descname"><span class="n"><span class="pre">log_warn_printf</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LOGGER</span></span>, <span class="n"><span class="pre">FMT</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.log_warn_printf" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.log_info_printf">
+<span class="target" id="log_8h_1ac700c9906a5d77b5ac8b9ff8e5382601"></span><span class="sig-name descname"><span class="n"><span class="pre">log_info_printf</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LOGGER</span></span>, <span class="n"><span class="pre">FMT</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.log_info_printf" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.log_debug_printf">
+<span class="target" id="log_8h_1a32d2594ab6339c0b8f2da0e48457260d"></span><span class="sig-name descname"><span class="n"><span class="pre">log_debug_printf</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LOGGER</span></span>, <span class="n"><span class="pre">FMT</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.log_debug_printf" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.log_printf">
+<span class="target" id="log_8h_1adc252d60fc7f77c8b2321d3cf6d7b8f2"></span><span class="sig-name descname"><span class="n"><span class="pre">log_printf</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LOGGER</span></span>, <span class="n"><span class="pre">LVL</span></span>, <span class="n"><span class="pre">FMT</span></span>, <span class="p"><span class="pre">...</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.log_printf" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Try to log a message at the defined level.</p>
+<p>Due to portability issues with MSVC, log formats must have at least one argument.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">DEFINE_LOGGER</span><span class="p">(</span><span class="n">blah</span><span class="p">,</span> <span class="s2">&quot;myapp.blah&quot;</span><span class="p">);</span>
+<span class="n">void</span> <span class="n">blahfn</span><span class="p">(</span><span class="nb">int</span> <span class="n">x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">log_info_printf</span><span class="p">(</span><span class="n">blah</span><span class="p">,</span> <span class="s2">&quot;blah happened with </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6loggerE">
+<span id="_CPPv3N4pvxs6loggerE"></span><span id="_CPPv2N4pvxs6loggerE"></span><span id="pvxs::logger"></span><span class="target" id="structpvxs_1_1logger"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">logger</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6loggerE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A logger. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6logger4testE5Level">
+<span id="_CPPv3N4pvxs6logger4testE5Level"></span><span id="_CPPv2N4pvxs6logger4testE5Level"></span><span id="pvxs::logger::test__Level"></span><span class="target" id="structpvxs_1_1logger_1ae395407864632542caed8cb84c425141"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">test</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs5LevelE" title="pvxs::Level"><span class="n"><span class="pre">Level</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">lvl</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6logger4testE5Level" title="Permalink to this definition">¶</a><br /></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>true if the logger currently allows a message at level LVL. </p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6logger4nameE">
+<span id="_CPPv3N4pvxs6logger4nameE"></span><span id="_CPPv2N4pvxs6logger4nameE"></span><span id="pvxs::logger::name__cCPC"></span><span class="target" id="structpvxs_1_1logger_1a169a4e4534d2134c59012e078369bb78"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6logger4nameE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>global name of this logger. Need not be unique </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6logger3lvlE">
+<span id="_CPPv3N4pvxs6logger3lvlE"></span><span id="_CPPv2N4pvxs6logger3lvlE"></span><span id="pvxs::logger::lvl__std::atomic:Level:"></span><span class="target" id="structpvxs_1_1logger_1a3f166cbaec8e1f4ec940b14634635a91"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">atomic</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs5LevelE" title="pvxs::Level"><span class="n"><span class="pre">Level</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">lvl</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6logger3lvlE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Current logging level. See logger_level_set(). </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+<section id="identification">
+<h2>Identification<a class="headerlink" href="#identification" title="Permalink to this heading">¶</a></h2>
+<p>Compile time access to PVXS library version information.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/util.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span>
+</pre></div>
+</div>
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.PVXS_VERSION">
+<span class="target" id="version_8h_1a4aa197390233f8c5822343d510a8f907"></span><span class="sig-name descname"><span class="n"><span class="pre">PVXS_VERSION</span></span></span><a class="headerlink" href="#c.PVXS_VERSION" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Current library version. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.PVXS_ABI_VERSION">
+<span class="target" id="version_8h_1a4d1fd8192b13a87fd8f17171ccb3e707"></span><span class="sig-name descname"><span class="n"><span class="pre">PVXS_ABI_VERSION</span></span></span><a class="headerlink" href="#c.PVXS_ABI_VERSION" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Current library ABI version <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.1.1 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.VERSION_INT">
+<span class="target" id="version_8h_1aec3b51ad3030e7a0894015698908ee00"></span><span class="sig-name descname"><span class="n"><span class="pre">VERSION_INT</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">V</span></span>, <span class="n"><span class="pre">R</span></span>, <span class="n"><span class="pre">M</span></span>, <span class="n"><span class="pre">P</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.VERSION_INT" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Construct version number constant. </p>
+</dd></dl>
+
+<p>eg. to conditionally compile based on library version.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#if PVXS_VERSION &lt; VERSION_INT(1,2,3,4)</span>
+<span class="o">//</span> <span class="n">enable</span> <span class="n">some</span> <span class="n">compatibility</span> <span class="n">code</span>
+<span class="c1">#endif</span>
+</pre></div>
+</div>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs11version_intEv">
+<span id="_CPPv3N4pvxs11version_intEv"></span><span id="_CPPv2N4pvxs11version_intEv"></span><span id="pvxs::version_int"></span><span class="target" id="namespacepvxs_1af786698c8b10afab7bb2a951392d1037"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">long</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">version_int</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs11version_intEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PVXS_VERSION captured at library compile time </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs11version_strEv">
+<span id="_CPPv3N4pvxs11version_strEv"></span><span id="_CPPv2N4pvxs11version_strEv"></span><span id="pvxs::version_str"></span><span class="target" id="namespacepvxs_1a4d14a3842b74a5f7d1c5cd1d64b4b106"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">version_str</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs11version_strEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Library version as a string. eg. “PVXS 1.2.3”. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs15version_abi_intEv">
+<span id="_CPPv3N4pvxs15version_abi_intEv"></span><span id="_CPPv2N4pvxs15version_abi_intEv"></span><span id="pvxs::version_abi_int"></span><span class="target" id="namespacepvxs_1a483b04bbe656d3d2651c9e4da4db8d3d"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">long</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">version_abi_int</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs15version_abi_intEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.1.1 </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PVXS_ABI_VERSION captured at library compile time </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs17version_abi_checkEv">
+<span id="_CPPv3N4pvxs17version_abi_checkEv"></span><span id="_CPPv2N4pvxs17version_abi_checkEv"></span><span id="pvxs::version_abi_check"></span><span class="target" id="namespacepvxs_1ad89a4df439aa7788f7060ecfb5e45efa"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">version_abi_check</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs17version_abi_checkEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Runtime ABI check.</p>
+<p>This test is only meaningful if it is performed prior to any other library calls.</p>
+<p>It is guaranteed that the library has no global constructors.</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.1.1 </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>true if the header and library ABI versions match, and if the header version is not newer than the library version.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="unit-test-helpers">
+<h2>Unit-test helpers<a class="headerlink" href="#unit-test-helpers" title="Permalink to this heading">¶</a></h2>
+<p>Extensions to epicsUnitTest.h</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/unittest.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span>
+</pre></div>
+</div>
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testTrue">
+<span class="target" id="unittest_8h_1aa9120f13b403b4e1830b7b7efef78714"></span><span class="sig-name descname"><span class="n"><span class="pre">testTrue</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">EXPR</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testTrue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which assert that an expression evaluate to ‘true’. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testFalse">
+<span class="target" id="unittest_8h_1ab7b6a25f28131950ce24e44e237f298f"></span><span class="sig-name descname"><span class="n"><span class="pre">testFalse</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">EXPR</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testFalse" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which assert that an expression evaluate to ‘true’. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testEq">
+<span class="target" id="unittest_8h_1a65eb08838bd7c40e6e14599695b2fecf"></span><span class="sig-name descname"><span class="n"><span class="pre">testEq</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LHS</span></span>, <span class="n"><span class="pre">RHS</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testEq" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which asserts equality between LHS and RHS. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> Roughly equivalent to <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testOk</span><span class="p">((</span><span class="n">LHS</span><span class="p">)</span><span class="o">==</span><span class="p">(</span><span class="n">RHS</span><span class="p">),</span> <span class="s2">&quot;...&quot;</span><span class="p">);</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testNotEq">
+<span class="target" id="unittest_8h_1adf653ed57697e8278999f422a7b0a383"></span><span class="sig-name descname"><span class="n"><span class="pre">testNotEq</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LHS</span></span>, <span class="n"><span class="pre">RHS</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testNotEq" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which asserts in-equality between LHS and RHS. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> Roughly equivalent to <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testOk</span><span class="p">((</span><span class="n">LHS</span><span class="p">)</span><span class="o">!=</span><span class="p">(</span><span class="n">RHS</span><span class="p">),</span> <span class="s2">&quot;...&quot;</span><span class="p">);</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testStrEq">
+<span class="target" id="unittest_8h_1a5fd32140d22531b3097e5422caec4205"></span><span class="sig-name descname"><span class="n"><span class="pre">testStrEq</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LHS</span></span>, <span class="n"><span class="pre">RHS</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testStrEq" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which asserts equality between LHS and RHS. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> Functionally equivalent to <a class="reference internal" href="#unittest_8h_1a65eb08838bd7c40e6e14599695b2fecf"><span class="std std-ref">testEq()</span></a> with two std::string instances. Prints diff-like output which is friendlier to multi-line strings. </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testStrMatch">
+<span class="target" id="unittest_8h_1a6f8ce531c7e8800fe76a1ab519c4e006"></span><span class="sig-name descname"><span class="n"><span class="pre">testStrMatch</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">EXPR</span></span>, <span class="n"><span class="pre">STR</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testStrMatch" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which asserts that STR matches the regular expression EXPR Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.1 Expression syntax is POSIX extended. </p>
+</dd>
+<dt><strong>Since</strong></dt><dd><p>0.1.1 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testArrEq">
+<span class="target" id="unittest_8h_1adadac5e7ec27ef805123570a1e04a799"></span><span class="sig-name descname"><span class="n"><span class="pre">testArrEq</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">LHS</span></span>, <span class="n"><span class="pre">RHS</span></span><span class="sig-paren">)</span><a class="headerlink" href="#c.testArrEq" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which asserts equality between LHS and RHS. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> Functionally equivalent to <a class="reference internal" href="#unittest_8h_1a65eb08838bd7c40e6e14599695b2fecf"><span class="std std-ref">testEq()</span></a> for objects with .size() and operator[]. Prints element by element differences </p>
+</dd></dl>
+
+<dl class="cpp macro">
+<dt class="sig sig-object cpp" id="c.testShow">
+<span class="target" id="unittest_8h_1a8cb86f8c976018b5171e6935bbdcb00e"></span><span class="sig-name descname"><span class="n"><span class="pre">testShow</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#c.testShow" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Macro which prints diagnostic (non-test) lines. Evaluates to a <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">pvxs::testCase</span></a> Roughly equivalent to <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testDiag</span><span class="p">(</span><span class="s2">&quot;...&quot;</span><span class="p">);</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<p>The testEq() macro and friends expand to a function which returns a <a class="reference internal" href="#_CPPv4N4pvxs8testCaseE" title="pvxs::testCase"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::testCase</span></code></a> instance
+which may be used as a <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">std::ostream</span></code> to append text describing a test. eg.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testEq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s2">&quot;We really hope this is true.&quot;</span><span class="p">;</span>
+<span class="k">if</span><span class="p">(</span><span class="n">testNotEq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s2">&quot;shouldn&#39;t be true&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">//</span> <span class="n">further</span> <span class="n">conditional</span> <span class="n">tests</span> <span class="k">if</span> <span class="mi">1</span><span class="o">!=</span><span class="mi">2</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I00EN4pvxs10testThrowsE8testCase2FN">
+<span id="_CPPv3I00EN4pvxs10testThrowsE2FN"></span><span id="_CPPv2I00EN4pvxs10testThrowsE2FN"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Exception</span></span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">FN</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="namespacepvxs_1a92bbce4ead844d9dd1b5debb00447bb6"></span><a class="reference internal" href="#_CPPv4N4pvxs8testCaseE" title="pvxs::testCase"><span class="n"><span class="pre">testCase</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">testThrows</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I00EN4pvxs10testThrowsE8testCase2FN" title="pvxs::testThrows::FN"><span class="n"><span class="pre">FN</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I00EN4pvxs10testThrowsE8testCase2FN" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Assert that an exception is thrown.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testThrows</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span><span class="o">&gt;</span><span class="p">([]()</span> <span class="p">{</span>
+     <span class="n">testShow</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="s2">&quot;Now you see me&quot;</span><span class="p">;</span>
+     <span class="n">throw</span> <span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span><span class="p">(</span><span class="s2">&quot;I happened&quot;</span><span class="p">);</span>
+     <span class="n">testShow</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="s2">&quot;Now you don&#39;t&quot;</span><span class="p">;</span>
+<span class="p">})</span><span class="o">&lt;&lt;</span><span class="s2">&quot;some message&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+ </p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Exception</strong> – The exception type which should be thrown </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fn</strong> – A callable</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">testCase</span></a> which passes if an Exception instance was caught, and false otherwise (wrong type, or no exception).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I00EN4pvxs15testThrowsMatchE8testCaseRKNSt6stringE2FN">
+<span id="_CPPv3I00EN4pvxs15testThrowsMatchERKNSt6stringE2FN"></span><span id="_CPPv2I00EN4pvxs15testThrowsMatchERKNSt6stringE2FN"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Exception</span></span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">FN</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="namespacepvxs_1ad0edddf7a9ecf5696eb0b4cc135da46b"></span><a class="reference internal" href="#_CPPv4N4pvxs8testCaseE" title="pvxs::testCase"><span class="n"><span class="pre">testCase</span></span></a><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">testThrowsMatch</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">expr</span></span>, <a class="reference internal" href="#_CPPv4I00EN4pvxs15testThrowsMatchE8testCaseRKNSt6stringE2FN" title="pvxs::testThrowsMatch::FN"><span class="n"><span class="pre">FN</span></span></a><span class="w"> </span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I00EN4pvxs15testThrowsMatchE8testCaseRKNSt6stringE2FN" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Assert that an exception is throw with a certain message.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testThrowsMatch</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span><span class="o">&gt;</span><span class="p">(</span><span class="s2">&quot;happened&quot;</span><span class="p">,</span> <span class="p">[]()</span> <span class="p">{</span>
+     <span class="n">testShow</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="s2">&quot;Now you see me&quot;</span><span class="p">;</span>
+     <span class="n">throw</span> <span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span><span class="p">(</span><span class="s2">&quot;I happened&quot;</span><span class="p">);</span>
+     <span class="n">testShow</span><span class="p">()</span><span class="o">&lt;&lt;</span><span class="s2">&quot;Now you don&#39;t&quot;</span><span class="p">;</span>
+<span class="p">})</span><span class="o">&lt;&lt;</span><span class="s2">&quot;some message&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.1.1 </p>
+</dd>
+</dl>
+</p>
+<dl class="field-list simple">
+<dt class="field-odd">Template Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Exception</strong> – The exception type which should be thrown </p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>expr</strong> – A regular expression </p></li>
+<li><p><strong>fn</strong> – A callable</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">testCase</span></a> which passes if an Exception instance was caught and std::exception::what() matched the provided regular expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8testCaseE">
+<span id="_CPPv3N4pvxs8testCaseE"></span><span id="_CPPv2N4pvxs8testCaseE"></span><span id="pvxs::testCase"></span><span class="target" id="classpvxs_1_1testCase"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">testCase</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs8testCaseE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A single test case (or diagnostic line).</p>
+<p>Acts as an output string to accumulate test comment. Multi-line output results in one test line, and subsequent diagnostic lines.</p>
+<p>Test line is printed when an active (non-moved) <a class="reference internal" href="#classpvxs_1_1testCase"><span class="std std-ref">testCase</span></a> is destroyed. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8testCase8testCaseEv">
+<span id="_CPPv3N4pvxs8testCase8testCaseEv"></span><span id="_CPPv2N4pvxs8testCase8testCaseEv"></span><span id="pvxs::testCase::testCase"></span><span class="target" id="classpvxs_1_1testCase_1a207549f1459600c5e5e96a3b40d335b4"></span><span class="sig-name descname"><span class="n"><span class="pre">testCase</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8testCase8testCaseEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>new diag message </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8testCase8testCaseEb">
+<span id="_CPPv3N4pvxs8testCase8testCaseEb"></span><span id="_CPPv2N4pvxs8testCase8testCaseEb"></span><span id="pvxs::testCase::testCase__b"></span><span class="target" id="classpvxs_1_1testCase_1a903e0890acdd01aa5530607d09707905"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">testCase</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">result</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8testCase8testCaseEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>new test case </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs8testCasecvbEv">
+<span id="_CPPv3NK4pvxs8testCasecvbEv"></span><span id="_CPPv2NK4pvxs8testCasecvbEv"></span><span id="pvxs::testCase::castto-b-operatorC"></span><span class="target" id="classpvxs_1_1testCase_1a5939022b3324c465c7e358b09482b158"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs8testCasecvbEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>true when passing </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8testCase7setPassEb">
+<span id="_CPPv3N4pvxs8testCase7setPassEb"></span><span id="_CPPv2N4pvxs8testCase7setPassEb"></span><span id="pvxs::testCase::setPass__b"></span><span class="target" id="classpvxs_1_1testCase_1a94cbbf0b50f3e00d8e0e60f698790341"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs8testCaseE" title="pvxs::testCase"><span class="n"><span class="pre">testCase</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">setPass</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">v</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8testCase7setPassEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Override current pass/fail result. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8testCase12setPassMatchERKNSt6stringERKNSt6stringE">
+<span id="_CPPv3N4pvxs8testCase12setPassMatchERKNSt6stringERKNSt6stringE"></span><span id="_CPPv2N4pvxs8testCase12setPassMatchERKNSt6stringERKNSt6stringE"></span><span id="pvxs::testCase::setPassMatch__ssCR.ssCR"></span><span class="target" id="classpvxs_1_1testCase_1adfafcebf6cb12b232894c10429d8af00"></span><a class="reference internal" href="#_CPPv4N4pvxs8testCaseE" title="pvxs::testCase"><span class="n"><span class="pre">testCase</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">setPassMatch</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">expr</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">inp</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8testCase12setPassMatchERKNSt6stringERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Override current pass/fail result if input matches a regular expression <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.1 Expression syntax is POSIX extended. </p>
+</dd>
+<dt><strong>Since</strong></dt><dd><p>0.1.1 Added </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN4pvxs8testCaselsER8testCaseRK1T">
+<span id="_CPPv3I0EN4pvxs8testCaselsERK1T"></span><span id="_CPPv2I0EN4pvxs8testCaselsERK1T"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1testCase_1a269094b5851fea94f87922f5a519fbca"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs8testCaseE" title="pvxs::testCase"><span class="n"><span class="pre">testCase</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">&lt;&lt;</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs8testCaselsER8testCaseRK1T" title="pvxs::testCase::operator&lt;&lt;::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">v</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN4pvxs8testCaselsER8testCaseRK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Append to message. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8testCase6streamEv">
+<span id="_CPPv3N4pvxs8testCase6streamEv"></span><span id="_CPPv2N4pvxs8testCase6streamEv"></span><span id="pvxs::testCase::stream"></span><span class="target" id="classpvxs_1_1testCase_1a6428e18e10fc8465fd741fd94af7c422"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">stream</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8testCase6streamEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Access to underlying std::ostream used to accumulate notes. When our operator&lt;&lt; isn’t enough. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.1.4 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<section id="ioc-testing">
+<h3>IOC Testing<a class="headerlink" href="#ioc-testing" title="Permalink to this heading">¶</a></h3>
+<p>Additional helpers for testing IOC applications.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/iochooks.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="n">namespace</span> <span class="n">ioc</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>When possible, use of the <code class="docutils literal notranslate"><span class="pre">TestIOC</span></code> class is recommended for both
+forward and backward compatibility with EPICS Base (&gt;= 3.15.0.1).</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs3ioc7TestIOCE">
+<span id="_CPPv3N4pvxs3ioc7TestIOCE"></span><span id="_CPPv2N4pvxs3ioc7TestIOCE"></span><span id="pvxs::ioc::TestIOC"></span><span class="target" id="classpvxs_1_1ioc_1_1TestIOC"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">TestIOC</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs3ioc7TestIOCE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Manage Test IOC life-cycle calls.</p>
+<p>Makes necessary calls to dbUnitTest.h API as well as any added calls needed by PVXS components.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MAIN</span><span class="p">(</span><span class="n">mytest</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">testPlan</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="o">//</span> <span class="n">TODO</span><span class="p">:</span> <span class="n">Set</span> <span class="n">actual</span> <span class="n">number</span> <span class="n">of</span> <span class="n">tests</span>
+    <span class="n">pvxs</span><span class="p">::</span><span class="n">testSetup</span><span class="p">();</span>
+    <span class="n">pvxs</span><span class="p">::</span><span class="n">logger_config_env</span><span class="p">();</span> <span class="o">//</span> <span class="p">(</span><span class="n">optional</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">TestIOC</span> <span class="n">ioc</span><span class="p">;</span> <span class="o">//</span> <span class="n">testdbPrepare</span><span class="p">()</span>
+
+        <span class="o">//</span> <span class="n">mytestioc</span><span class="o">.</span><span class="n">dbd</span> <span class="n">must</span> <span class="n">include</span> <span class="n">pvxsIoc</span><span class="o">.</span><span class="n">dbd</span>
+        <span class="n">testdbReadDatabase</span><span class="p">(</span><span class="s2">&quot;mytestioc.dbd&quot;</span><span class="p">,</span> <span class="n">NULL</span><span class="p">,</span> <span class="n">NULL</span><span class="p">);</span>
+        <span class="n">mytestioc_registerRecordDeviceDriver</span><span class="p">(</span><span class="n">pdbbase</span><span class="p">);</span>
+        <span class="n">testdbReadDatabase</span><span class="p">(</span><span class="s2">&quot;sometest.db&quot;</span><span class="p">,</span> <span class="n">NULL</span><span class="p">,</span> <span class="n">NULL</span><span class="p">);</span>
+
+        <span class="o">//</span> <span class="n">tests</span> <span class="n">before</span> <span class="n">iocInit</span><span class="p">()</span>
+
+        <span class="n">ioc</span><span class="o">.</span><span class="n">init</span><span class="p">();</span>
+
+        <span class="o">//</span> <span class="n">tests</span> <span class="n">after</span> <span class="n">iocInit</span><span class="p">()</span>
+
+        <span class="n">ioc</span><span class="o">.</span><span class="n">shutdown</span><span class="p">();</span> <span class="o">//</span> <span class="p">(</span><span class="n">optional</span><span class="p">)</span> <span class="ow">in</span> <span class="o">~</span><span class="n">TestIOC</span> <span class="k">if</span> <span class="n">omitted</span>
+    <span class="p">}</span>
+    <span class="p">{</span>
+        <span class="o">...</span> <span class="n">repeat</span> <span class="o">...</span>
+    <span class="p">}</span>
+    <span class="n">epicsExitCallAtExits</span><span class="p">();</span>
+    <span class="n">pvxs</span><span class="p">::</span><span class="n">cleanup_for_valgrind</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.3.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="utilities">
+<h2>Utilities<a class="headerlink" href="#utilities" title="Permalink to this heading">¶</a></h2>
+<p>Misc. utility code.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/util.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span>
+</pre></div>
+</div>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6escapeERKNSt6stringE">
+<span id="_CPPv3N4pvxs6escapeERKNSt6stringE"></span><span id="_CPPv2N4pvxs6escapeERKNSt6stringE"></span><span id="pvxs::escape__ssCR"></span><span class="target" id="namespacepvxs_1a79135087f4bbe47599d5a4528b23b81f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Escaper</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">escape</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">s</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6escapeERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Print string to output stream with non-printable characters escaped.</p>
+<p>Outputs (almost) C-style escapes. Prefers short escapes for newline, tab, quote, etc (”\n”). Falls back to hex escape (eg. “\xab”).</p>
+<p>Unlike C, hex escapes are always 2 chars. eg. the output “\xabcase” would need to be manually changed to “\xab””case” to be used as C source.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="p">::</span><span class="n">string</span> <span class="n">blah</span><span class="p">(</span><span class="s2">&quot;this </span><span class="se">\&quot;</span><span class="s2">is a test</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">);</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">pvxs</span><span class="p">::</span><span class="n">escape</span><span class="p">(</span><span class="n">blah</span><span class="p">);</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6escapeEPKc">
+<span id="_CPPv3N4pvxs6escapeEPKc"></span><span id="_CPPv2N4pvxs6escapeEPKc"></span><span id="pvxs::escape__cCP"></span><span class="target" id="namespacepvxs_1a7b4c21d582220f7463be2544ccf34908"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Escaper</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">escape</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">s</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6escapeEPKc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Print nil terminated char array to output stream with non-printable characters escaped. <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">pvxs</span><span class="p">::</span><span class="n">escape</span><span class="p">(</span><span class="s2">&quot;this </span><span class="se">\&quot;</span><span class="s2">is a test</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6escapeEPKc6size_t">
+<span id="_CPPv3N4pvxs6escapeEPKc6size_t"></span><span id="_CPPv2N4pvxs6escapeEPKc6size_t"></span><span id="pvxs::escape__cCP.s"></span><span class="target" id="namespacepvxs_1adbedff75f35a926981452c876d728e3c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">Escaper</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">escape</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">char</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">s</span></span>, <span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">n</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6escapeEPKc6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Print fixed length char array to output stream with non-printable characters escaped. <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">pvxs</span><span class="p">::</span><span class="n">escape</span><span class="p">(</span><span class="s2">&quot;this </span><span class="se">\&quot;</span><span class="s2">is a test</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
+<span class="o">//</span> <span class="n">prints</span> <span class="s1">&#39;this </span><span class="se">\&quot;</span><span class="s1">&#39;</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs20cleanup_for_valgrindEv">
+<span id="_CPPv3N4pvxs20cleanup_for_valgrindEv"></span><span id="_CPPv2N4pvxs20cleanup_for_valgrindEv"></span><span id="pvxs::cleanup_for_valgrind"></span><span class="target" id="namespacepvxs_1a2eaf125c5e701078a318c9719ce7c7ec"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">cleanup_for_valgrind</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs20cleanup_for_valgrindEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Free some internal global allocations to avoid false positives in valgrind (or similar) tools looking for memory leaks.</p>
+<p>Calls libevent_global_shutdown() when available (libevent &gt;=2.1).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This function is optional. If you don’t understand the intended use case, then do not call it!</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Pre<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Caller must release all resources explicitly allocated through PVXS (on all threads). </p>
+</dd>
+<dt class="field-even">Post<span class="colon">:</span></dt>
+<dd class="field-even"><p>Invalidates internal state. Use of <strong>any</strong> API functions afterwards is undefined! </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6SigIntE">
+<span id="_CPPv3N4pvxs6SigIntE"></span><span id="_CPPv2N4pvxs6SigIntE"></span><span id="pvxs::SigInt"></span><span class="target" id="classpvxs_1_1SigInt"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">SigInt</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6SigIntE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Portable process signal handling in CLI tools.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epicsEvent</span> <span class="n">evt</span><span class="p">;</span>
+<span class="n">SigInt</span> <span class="n">handle</span><span class="p">([</span><span class="o">&amp;</span><span class="n">evt</span><span class="p">]()</span> <span class="p">{</span>
+     <span class="n">evt</span><span class="o">.</span><span class="n">trigger</span><span class="p">();</span>
+<span class="p">});</span>
+<span class="o">...</span> <span class="n">setup</span> <span class="n">network</span> <span class="n">operations</span>
+<span class="n">evt</span><span class="o">.</span><span class="n">wait</span><span class="p">();</span>
+<span class="o">//</span> <span class="n">completion</span><span class="p">,</span> <span class="ow">or</span> <span class="n">SIGINT</span>
+</pre></div>
+</div>
+</p>
+<p>Saves existing handler, which are restored by dtor.</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.1.0 “handler” action runs in thread context. Safe to take locks etc. Previously handler action ran in signal handler context. </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs18target_informationERNSt7ostreamE">
+<span id="_CPPv3N4pvxs18target_informationERNSt7ostreamE"></span><span id="_CPPv2N4pvxs18target_informationERNSt7ostreamE"></span><span id="pvxs::target_information__osR"></span><span class="target" id="namespacepvxs_1aee93e6c1fe4cb8f699e597b3480dd99f"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-prename descclassname"><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span></span><span class="sig-name descname"><span class="n"><span class="pre">target_information</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs18target_informationERNSt7ostreamE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Describe build and runtime configuration of current system.</p>
+<p>Print information which may be using for when troubleshooting, or creating a bug report.</p>
+<p>Printed by CLI “pvxinfo -D” and iocsh “pvxs_target_information”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The same ostream passed as argument. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN4pvxs8MPMCFIFOE">
+<span id="_CPPv3I0EN4pvxs8MPMCFIFOE"></span><span id="_CPPv2I0EN4pvxs8MPMCFIFOE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1MPMCFIFO"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPMCFIFO</span></span></span><a class="headerlink" href="#_CPPv4I0EN4pvxs8MPMCFIFOE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Thread-safe, bounded, multi-producer, multi-consumer FIFO queue.</p>
+<p>Queue value_type must be movable. If T is also copy constructable, then <a class="reference internal" href="#classpvxs_1_1MPMCFIFO_1a66fca32a19a521402e8eb4871bb0d4dd"><span class="std std-ref">push(const T&amp;)</span></a> may be used.</p>
+<p>As an exception, the destructor is not re-entrant. Concurrent calls to methods during destruction will result in undefined behavior.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MPMCFIFO</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">function</span><span class="o">&lt;</span><span class="n">void</span><span class="p">()</span><span class="o">&gt;&gt;</span> <span class="n">Q</span><span class="p">;</span>
+<span class="o">...</span>
+<span class="k">while</span><span class="p">(</span><span class="n">auto</span> <span class="n">work</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span> <span class="p">{</span> <span class="o">//</span> <span class="n">Q</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">nullptr</span><span class="p">)</span> <span class="n">to</span> <span class="k">break</span> <span class="n">loop</span>
+    <span class="n">work</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-types">Public Types</p>
+<dl class="cpp type">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8MPMCFIFO10value_typeE">
+<span id="_CPPv3N4pvxs8MPMCFIFO10value_typeE"></span><span id="_CPPv2N4pvxs8MPMCFIFO10value_typeE"></span><span id="pvxs::MPMCFIFO::value_type"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1a65e6a840c568d109fc6b7ff0d2c15926"></span><span class="k"><span class="pre">typedef</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs8MPMCFIFOE" title="pvxs::MPMCFIFO::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">value_type</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs8MPMCFIFO10value_typeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Template parameter. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8MPMCFIFO8MPMCFIFOE6size_t">
+<span id="_CPPv3N4pvxs8MPMCFIFO8MPMCFIFOE6size_t"></span><span id="_CPPv2N4pvxs8MPMCFIFO8MPMCFIFOE6size_t"></span><span id="pvxs::MPMCFIFO::MPMCFIFO__s"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1ae73a05583db2093e2be9f7e7e53257f4"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MPMCFIFO</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">limit</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0u</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8MPMCFIFO8MPMCFIFOE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Construct a new queue </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>limit</strong> – If non-zero, then <a class="reference internal" href="#classpvxs_1_1MPMCFIFO_1a1caccc3f712cb31bb806ffe749d7924b"><span class="std std-ref">emplace()</span></a>/push() will block while while queue size is greater than or equal to this limit. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8MPMCFIFOD0Ev">
+<span id="_CPPv3N4pvxs8MPMCFIFOD0Ev"></span><span id="_CPPv2N4pvxs8MPMCFIFOD0Ev"></span><span id="pvxs::MPMCFIFO::~MPMCFIFO"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1ab2f1eebb3c5b8570c6272f89ebcb653c"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">~MPMCFIFO</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8MPMCFIFOD0Ev" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Destructor is not re-entrant. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs8MPMCFIFO4sizeEv">
+<span id="_CPPv3NK4pvxs8MPMCFIFO4sizeEv"></span><span id="_CPPv2NK4pvxs8MPMCFIFO4sizeEv"></span><span id="pvxs::MPMCFIFO::sizeC"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1a4041a390dd058a7198c011b65ea2ec44"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">size_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">size</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs8MPMCFIFO4sizeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Poll number of elements in the work queue at this moment. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4IDpEN4pvxs8MPMCFIFO7emplaceEvDpRR4Args">
+<span id="_CPPv3IDpEN4pvxs8MPMCFIFO7emplaceEDpRR4Args"></span><span id="_CPPv2IDpEN4pvxs8MPMCFIFO7emplaceEDpRR4Args"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="p"><span class="pre">...</span></span><span class="sig-name descname"><span class="n"><span class="pre">Args</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1MPMCFIFO_1a1caccc3f712cb31bb806ffe749d7924b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">emplace</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4IDpEN4pvxs8MPMCFIFO7emplaceEvDpRR4Args" title="pvxs::MPMCFIFO::emplace::Args"><span class="n"><span class="pre">Args</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">...</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">args</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4IDpEN4pvxs8MPMCFIFO7emplaceEvDpRR4Args" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Construct a new element into the queue.</p>
+<p>Will block while full. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8MPMCFIFO4pushERR1T">
+<span id="_CPPv3N4pvxs8MPMCFIFO4pushERR1T"></span><span id="_CPPv2N4pvxs8MPMCFIFO4pushERR1T"></span><span id="pvxs::MPMCFIFO::push__TRR"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1a2ab231b87ae249ff4541d25a2fe578e5"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">push</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4I0EN4pvxs8MPMCFIFOE" title="pvxs::MPMCFIFO::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">ent</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8MPMCFIFO4pushERR1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Move a new element to the queue. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8MPMCFIFO4pushERK1T">
+<span id="_CPPv3N4pvxs8MPMCFIFO4pushERK1T"></span><span id="_CPPv2N4pvxs8MPMCFIFO4pushERK1T"></span><span id="pvxs::MPMCFIFO::push__TCR"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1a66fca32a19a521402e8eb4871bb0d4dd"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">push</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs8MPMCFIFOE" title="pvxs::MPMCFIFO::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">ent</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8MPMCFIFO4pushERK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Copy a new element to the queue. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs8MPMCFIFO3popEv">
+<span id="_CPPv3N4pvxs8MPMCFIFO3popEv"></span><span id="_CPPv2N4pvxs8MPMCFIFO3popEv"></span><span id="pvxs::MPMCFIFO::pop"></span><span class="target" id="classpvxs_1_1MPMCFIFO_1ab81dc06b1173c7982b5593e16260429b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs8MPMCFIFOE" title="pvxs::MPMCFIFO::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pop</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs8MPMCFIFO3popEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Remove an element from the queue.</p>
+<p>Blocks while queue is empty. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Misc</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#logging">Logging</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#controlling-logging">Controlling Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#logging-from-user-applications">Logging from User applications</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#identification">Identification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#unit-test-helpers">Unit-test helpers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ioc-testing">IOC Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#utilities">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="pvalink.html" title="previous chapter">PVA Links</a></li>
+      <li>Next: <a href="details.html" title="next chapter">Details</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/util.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

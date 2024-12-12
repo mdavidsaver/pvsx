@@ -1,0 +1,36 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://epics-base.github.io/pvxs/pvalink-schema-0.json",
+    "title": "PVA Link schema",
+    "type": ["string", "object"],
+    "properties": {
+        "pv": { "type": "string" },
+        "field": {
+            "type": "string",
+            "default": "value"
+        },
+        "Q": {
+            "type": "integer",
+            "default": 4
+        },
+        "proc": {
+            "type": ["boolean", "string", "null"],
+            "enum": [true, false, null, "", "NPP", "PP", "CP", "CPP"],
+            "default": null
+        },
+        "sevr": {
+            "type": ["boolean", "string"],
+            "enum": [true, false, "NMS", "MS", "MSI", "MSS"],
+            "default": "NMS"
+        },
+        "time": { "type": "boolean", "default": false },
+        "monorder": { "type": "integer", "default": 0 },
+        "defer": { "type": "boolean", "default": false },
+        "retry": { "type": "boolean", "default": false },
+        "pipeline": { "type": "boolean", "default": false },
+        "always": { "type": "boolean", "default": false },
+        "atomic": { "type": "boolean", "default": false },
+        "local": { "type": "boolean", "default": false }
+    },
+    "additionalProperties": false
+}

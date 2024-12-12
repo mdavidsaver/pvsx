@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>PVA Network Configuration &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Examples" href="example.html" />
+    <link rel="prev" title="Overview" href="overview.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="pva-network-configuration">
+<span id="netconfig"></span><h1>PVA Network Configuration<a class="headerlink" href="#pva-network-configuration" title="Permalink to this heading">¶</a></h1>
+<section id="big-picture">
+<h2>Big Picture<a class="headerlink" href="#big-picture" title="Permalink to this heading">¶</a></h2>
+<p>A PV Access network protocol operation proceeds in two phases:
+PV name resolution, and data transfer.
+Name resolution is the process is determining which PVA server claims to provide each PV name.
+Once this is known, a TCP connection is open to that server, and the operation(s) are executed.</p>
+<p>The PVA Name resolution process is similar to Channel Access protocol.</p>
+<p>When a name needs to be resolved, a PVA client will begin sending UDP search messages to any addresses
+listed in <strong>EPICS_PVA_ADDR_LIST</strong> and also via TCP to any servers listed in <strong>EPICS_PVA_NAME_SERVERS</strong>
+which can be reached.</p>
+<p>UDP searches are by default sent to port <strong>5076</strong>, subject to <strong>EPICS_PVA_BROADCAST_PORT</strong> and
+port numbers explicitly given in <strong>EPICS_PVA_ADDR_LIST</strong>.</p>
+<p>The addresses in <strong>EPICS_PVA_ADDR_LIST</strong> may include IPv4/6 unicast, multicast, and/or broadcast addresses.
+By default (cf. <strong>EPICS_PVA_AUTO_ADDR_LIST</strong>) the address list is automatically populated
+with the IPv4 broadcast addresses of all local network interfaces.</p>
+<p>Searches will be repeated periodically in perpetuity until a positive response is received,
+or the operation is cancelled.</p>
+<p>In order to reduce the number of broadcast packets, which every PVA host must process,
+the time between searches will initially by short, but gradually increase
+as time passes without a positive response.
+This interval may be reduced when a new PVA server begins sending Beacon messages,
+or when <a class="reference internal" href="client.html#_CPPv4N4pvxs6client7Context7hurryUpEv" title="pvxs::client::Context::hurryUp"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::hurryUp()</span></code></a> is called.</p>
+<p>Server beacon destinations are by default configured using the client configuration.
+This may be overridden with <strong>EPICS_PVAS_BEACON_ADDR_LIST</strong> and <strong>EPICS_PVAS_AUTO_BEACON_ADDR_LIST</strong>.</p>
+</section>
+<section id="environment-variables">
+<span id="environ"></span><h2>Environment variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h2>
+<p>This table lists all of the <code class="docutils literal notranslate"><span class="pre">$EPICS_PVA*</span></code> environment variables understood by PVXS.
+See Client <a class="reference internal" href="client.html#clientconf"><span class="std std-ref">Configuration</span></a> and Server <a class="reference internal" href="server.html#serverconf"><span class="std std-ref">Configuration</span></a> for detailed explanations.</p>
+<p>Many variables come in pairs of <code class="docutils literal notranslate"><span class="pre">$EPICS_PVA_*</span></code> and <code class="docutils literal notranslate"><span class="pre">$EPICS_PVAS_*</span></code>.
+A Client will look at only <code class="docutils literal notranslate"><span class="pre">$EPICS_PVA_*</span></code>.
+A server will prefer <code class="docutils literal notranslate"><span class="pre">$EPICS_PVAS_*</span></code> if set,
+or fallback to use the associated <code class="docutils literal notranslate"><span class="pre">$EPICS_PVA_*</span></code> if set.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Client</p></th>
+<th class="head"><p>Server</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>EPICS_PVA_ADDR_LIST</p></td>
+<td><p>x</p></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><td><p>EPICS_PVAS_BEACON_ADDR_LIST</p></td>
+<td></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-even"><td><p>EPICS_PVA_AUTO_ADDR_LIST</p></td>
+<td><p>x</p></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><td><p>EPICS_PVAS_AUTO_BEACON_ADDR_LIST</p></td>
+<td></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-even"><td><p>EPICS_PVAS_INTF_ADDR_LIST</p></td>
+<td></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><td><p>EPICS_PVA_SERVER_PORT</p></td>
+<td><p>x</p></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-even"><td><p>EPICS_PVAS_SERVER_PORT</p></td>
+<td></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><td><p>EPICS_PVA_BROADCAST_PORT</p></td>
+<td><p>x</p></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-even"><td><p>EPICS_PVAS_BROADCAST_PORT</p></td>
+<td></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><td><p>EPICS_PVAS_IGNORE_ADDR_LIST</p></td>
+<td></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-even"><td><p>EPICS_PVA_CONN_TMO</p></td>
+<td><p>x</p></td>
+<td><p>x</p></td>
+</tr>
+<tr class="row-odd"><td><p>EPICS_PVA_NAME_SERVERS</p></td>
+<td><p>x</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="address-spec">
+<span id="addrspec"></span><h2>Address Spec.<a class="headerlink" href="#address-spec" title="Permalink to this heading">¶</a></h2>
+<p>Entries in <strong>EPICS_PVA*_ADDR_LIST</strong> variables must be in one of the following forms:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ip4-or-host&gt;[:&lt;port#&gt;][,TTL#][&#64;ifacename]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;[&quot;&lt;ip6-or-host&gt;&quot;]&quot;[:&lt;port#&gt;][,TTL#][&#64;ifacename]</span></code></p></li>
+</ul>
+<p>Examples include:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">myhost</span></code></dt><dd><p>Lookup hostname at startup, use default port number.
+Use OS routing table.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">10.1.1.1:5076</span></code></dt><dd><p>Explicit IPv4 address and port number.
+Use OS routing table.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">[2600:1234::42]</span></code></dt><dd><p>Explicit IPv6 address with default port.
+Use OS routing table.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">224.0.2.3,255&#64;192.168.1.1</span></code></dt><dd><p>IPv4 multicast address, with Time To Live set to 255.
+Send via the network interface with address <code class="docutils literal notranslate"><span class="pre">192.168.1.1</span></code>.
+Use default port number.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">[ff02::42:1],1&#64;br0</span></code></dt><dd><p>IPv6 multicast address, with Time To Live set to 1 (roughly equivalent to IPv4 broadcast).
+Send via the network interface named <code class="docutils literal notranslate"><span class="pre">br0</span></code>.
+Use default port number.</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">PVA Network Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#big-picture">Big Picture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#environment-variables">Environment variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#address-spec">Address Spec.</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="overview.html" title="previous chapter">Overview</a></li>
+      <li>Next: <a href="example.html" title="next chapter">Examples</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/netconfig.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

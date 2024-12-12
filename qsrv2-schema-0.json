@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://epics-base.github.io/pvxs/qsrv2-schema-0.json",
+    "title": "QSRV2 group schema",
+    "type": "object",
+    "additionalProperties": {
+        "$comment": "Group",
+        "type": "object",
+        "properties": {
+            "+id": { "type": "string" },
+            "+atomic": { "type": "boolean", "default": true }
+        },
+        "additionalProperties": {
+            "$comment": "Group field",
+            "type": "object",
+            "properties": {
+                "+id": { "type": "string" },
+                "+type": {
+                    "type": "string",
+                    "enum": ["any", "meta", "plain", "proc", "scalar", "structure"],
+                    "default": "scalar"
+                },
+                "+channel":  { "type": "string" },
+                "+putorder": { "type": "integer", "default": 0 },
+                "+trigger":  { "type": "string" , "default": "" }
+            },
+            "additionalProperties": false
+        }
+    }
+}

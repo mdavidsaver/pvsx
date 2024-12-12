@@ -1,0 +1,582 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Release Notes &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Details" href="details.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="release-notes">
+<span id="releasenotes"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this heading">¶</a></h1>
+<section id="unreleased">
+<h2>1.3.3 (UNRELEASED)<a class="headerlink" href="#unreleased" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Client: search retry step reset on channel reconnection (Anze Zagar)</p></li>
+<li><p>Various documentation improvements!  (Érico Nogueira)</p></li>
+<li><p>Fix dbLoadGroups (Érico Nogueira)</p></li>
+<li><p>Fix build with epics-base 7.0.7 (Rémi NICOLE)</p></li>
+</ul>
+</section>
+<section id="oct-2024">
+<h2>1.3.2 (Oct 2024)<a class="headerlink" href="#oct-2024" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Python 3.12 support</p></li>
+<li><p>client: Avoid FD leak on failed connect()</p></li>
+<li><p>Correctly set TCP_NODELAY on winsock</p></li>
+<li><p>Fix copy of Any/Union</p></li>
+<li><p>ioc: Workaround asTrapWrite clobbering dbChannel</p></li>
+<li><p>ioc: ACF fix write permit when groups are present</p></li>
+<li><p>server: correctly adjudicate collision bind() of specific port</p></li>
+</ul>
+</section>
+<section id="dec-2023">
+<h2>1.3.1 (Dec 2023)<a class="headerlink" href="#dec-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Install pvxsIoc.dbd with the correct name in python build.</p></li>
+<li><p>No change to Makefile build.</p></li>
+</ul>
+</section>
+<section id="id1">
+<h2>1.3.0 (Dec 2023)<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Set TCP_NODELAY on client and server sockets.</p></li>
+<li><p>Disambiguate Size from Selector when decoding messages.</p></li>
+<li><dl class="simple">
+<dt>QSRV</dt><dd><ul>
+<li><p><a class="reference internal" href="ioc.html#qsrv2"><span class="std std-ref">QSRV 2</span></a> now considered “feature complete”.</p></li>
+<li><p>Avoid sending 0 precision w/ integer value.</p></li>
+<li><p>Add <a class="reference internal" href="pvalink.html#pvalink"><span class="std std-ref">PVA Links</span></a>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="oct-2023">
+<h2>1.2.4 (Oct 2023)<a class="headerlink" href="#oct-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>data: Relax when assigning struct[] or union[] of similar types.</p></li>
+<li><p>client: avoid assert() with invalid forced server name.</p></li>
+<li><p>client: propagate exception during early op. setup.</p></li>
+<li><p>client: GET yield complete updates after first.</p></li>
+<li><p>server: Ensure that variables bound into operation callback <code class="docutils literal notranslate"><span class="pre">std::function&lt;&gt;</span></code> are
+released promptly when that operation is ended.</p></li>
+<li><p>server: relax post() after finish().  Return false instead of throwing <code class="docutils literal notranslate"><span class="pre">std::logic_error</span></code>.</p></li>
+<li><dl class="simple">
+<dt>ioc: ensure db_cancel_event() before ~MonitorControlOp</dt><dd><ul>
+<li><p>Workaround for [db_cancel_event()](<a class="reference external" href="https://github.com/epics-base/epics-base/issues/423">https://github.com/epics-base/epics-base/issues/423</a>) bug.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>ioc: Fix typo preventing processing of DBR_STRING fields.</p></li>
+<li><p>ioc: fix group put always <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">dbProcess</span></code>.</p></li>
+<li><p>ioc: fix block=true to DBF_ENUM.</p></li>
+<li><p>ioc: actually require +putorder to PUT.</p></li>
+<li><p>ioc: group put w/o effect is an error.</p></li>
+<li><p>ioc: accept record._options.process as bool</p></li>
+<li><p>ioc: group avoid post() empty events</p></li>
+</ul>
+</section>
+<section id="sept-2023">
+<h2>1.2.3 (Sept 2023)<a class="headerlink" href="#sept-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Add <code class="docutils literal notranslate"><span class="pre">$PVXS_ENABLE_IPV6</span></code> environment variable.  Set <code class="docutils literal notranslate"><span class="pre">PVXS_ENABLE_IPV6=NO</span></code> to disable usage of IPv6.</p></li>
+<li><dl class="simple">
+<dt>IOC: A warning is printed if a group definition includes no <code class="docutils literal notranslate"><span class="pre">+trigger</span></code> mappings.</dt><dd><p>This is likely a mis-configuration by omission which will produce more monitor updates than expected.</p>
+</dd>
+</dl>
+</li>
+<li><p><a class="reference internal" href="source.html#_CPPv4N4pvxs6server9ConnectOp5errorERKNSt6stringE" title="pvxs::server::ConnectOp::error"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::ConnectOp::error()</span></code></a> no longer blocks.</p></li>
+<li><p>Add <a class="reference internal" href="util.html#_CPPv4N4pvxs18target_informationERNSt7ostreamE" title="pvxs::target_information"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::target_information()</span></code></a>.</p></li>
+<li><p>IOC: fill in <code class="docutils literal notranslate"><span class="pre">display.precision</span></code>.</p></li>
+<li><p>Add <a class="reference internal" href="qgroup.html#understandinggroups"><span class="std std-ref">Understanding Groups</span></a> section.</p></li>
+<li><p>Add <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt7NTTableE" title="pvxs::nt::NTTable"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::NTTable</span></code></a> helper.</p></li>
+<li><p>Clarify some exception messages.</p></li>
+<li><p>Add <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::ioc::testPrepare</span></code>.</p></li>
+</ul>
+</section>
+<section id="june-2023">
+<h2>1.2.2 (June 2023)<a class="headerlink" href="#june-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>IOC: improve long string detection.</p></li>
+<li><p>Changes to Tree output format for <code class="docutils literal notranslate"><span class="pre">Value</span></code>.</p></li>
+<li><p>Applied various bug fixes for issued detected by static analysis.  All believed to be minor.</p></li>
+</ul>
+</section>
+<section id="id2">
+<h2>1.2.1 (June 2023)<a class="headerlink" href="#id2" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Quiet erroneous MONITOR exceeds window size warning message on <code class="docutils literal notranslate"><span class="pre">finish()</span></code>.</p></li>
+<li><p>Fix incomplete py build</p></li>
+<li><p>Add Python 3.11 builds (Alex Wells)</p></li>
+</ul>
+</section>
+<section id="may-2023">
+<h2>1.2.0 (May 2023)<a class="headerlink" href="#may-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>server: fix default monitor queueSize to 4</p></li>
+<li><p>improve localhost multicast forwarding</p></li>
+<li><p>server: bind both wildcard for UDP</p></li>
+<li><p>update bundled libevent</p></li>
+<li><p>Add <a class="reference internal" href="ntscalar.html#_CPPv4N4pvxs2nt8NTScalar4formE" title="pvxs::nt::NTScalar::form"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::NTScalar::form</span></code></a>.</p></li>
+<li><p>NTEnum add <code class="docutils literal notranslate"><span class="pre">display.description</span></code></p></li>
+<li><p>client: schedule initial search use separate event from the generic work queue.  (Thomas Ives)</p></li>
+<li><p>client: re-define the meaning of poke()</p></li>
+<li><p>server: fix <code class="docutils literal notranslate"><span class="pre">stats(reset=true)</span></code></p></li>
+<li><p>prevent simple <code class="docutils literal notranslate"><span class="pre">Any</span></code> self-assignment</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Value::copyIn()</span></code> (also <code class="docutils literal notranslate"><span class="pre">from()</span></code> and <code class="docutils literal notranslate"><span class="pre">operator</span> <span class="pre">=</span></code>) add <code class="docutils literal notranslate"><span class="pre">Array</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Array</span></code> w/ implied alloc+convert</p></li>
+<li><p>client: fix batch pop() of exception</p></li>
+<li><p>fix monitor pipeline and <code class="docutils literal notranslate"><span class="pre">finish()</span></code></p></li>
+<li><p>server: add MonitorStat::nSquash</p></li>
+<li><p>Add <em>feature preview</em> of <a class="reference internal" href="ioc.html#qsrv2"><span class="std std-ref">QSRV 2</span></a> IOC server functionality.</p></li>
+</ul>
+</section>
+<section id="april-2023">
+<h2>1.1.4 (April 2023)<a class="headerlink" href="#april-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>client: fix delta sync of Compound.  Regression in 1.1.0.</p></li>
+<li><p>Add wrappers for some libevent socket manipulations as <a class="reference internal" href="details.html#expertapi"><span class="std std-ref">Expert APIs</span></a>.</p></li>
+<li><p>Improve diff output of <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">testStrEq</span></code>.</p></li>
+<li><p>msvc build compat.  <code class="docutils literal notranslate"><span class="pre">/wd*</span></code> compiler flags sometimes interpreted as paths.</p></li>
+</ul>
+</section>
+<section id="mar-2023">
+<h2>1.1.3 (Mar 2023)<a class="headerlink" href="#mar-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fix <a class="reference internal" href="value.html#_CPPv4NK4pvxs5Value8nmembersEv" title="pvxs::Value::nmembers"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::nmembers()</span></code></a> which erroneously returned <code class="docutils literal notranslate"><span class="pre">0</span></code> for <code class="docutils literal notranslate"><span class="pre">StructA</span></code> and <code class="docutils literal notranslate"><span class="pre">UnionA</span></code>.</p></li>
+<li><p>Fix <a class="reference internal" href="value.html#_CPPv4N4pvxs5Value6unmarkEbb" title="pvxs::Value::unmark"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::unmark()</span></code></a> where <code class="docutils literal notranslate"><span class="pre">parent=true</span></code> caused corruption.</p></li>
+<li><p>Change to “magic” automatic <code class="docutils literal notranslate"><span class="pre">Union</span></code> member selection during assignment.</p></li>
+<li><p>Fix <a class="reference internal" href="value.html#_CPPv4I0ENK4pvxs12shared_array9convertToE12shared_arrayI2TOEv" title="pvxs::shared_array::convertTo"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::convertTo()</span></code></a> converting <code class="docutils literal notranslate"><span class="pre">Float64</span></code> to <code class="docutils literal notranslate"><span class="pre">Float32</span></code> caused corruption.</p></li>
+<li><p>Fix TypeDef(const Value&amp; val) for Union/UnionA/StructA</p></li>
+<li><p>Fix unsigned handling</p></li>
+<li><p>server: rework cleanup of connection, channel, and operation</p></li>
+</ul>
+</section>
+<section id="feb-2023">
+<h2>1.1.2 (Feb 2023)<a class="headerlink" href="#feb-2023" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>SigInt fix disarm</p></li>
+<li><p>Value fix delta output format to actually show delta.</p></li>
+<li><p>add <a class="reference internal" href="value.html#_CPPv4N4pvxs12shared_array4thawEv" title="pvxs::shared_array::thaw"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::thaw()</span></code></a></p></li>
+<li><p><a class="reference internal" href="value.html#_CPPv4N4pvxs5Value6lookupERKNSt6stringE" title="pvxs::Value::lookup"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::lookup()</span></code></a> throw NoField</p></li>
+<li><p>Require <code class="docutils literal notranslate"><span class="pre">setuptools_dso&gt;=2.7a1</span></code>.</p></li>
+</ul>
+</section>
+<section id="dec-2022">
+<h2>1.1.1 (Dec 2022)<a class="headerlink" href="#dec-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fix protocol decoding error with TypeStore.</p></li>
+</ul>
+</section>
+<section id="nov-2022">
+<h2>1.1.0 (Nov 2022)<a class="headerlink" href="#nov-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Client Subscription yields “complete” Value to user code.
+Unchanged fields will appear with the values most recently received,
+kept in an internal cache.  As a consequence, array and union fields
+will always be shared with this case, and can never be safety modified.</p></li>
+<li><p>Change Server monitor watermark meaning from edge to level trigger.</p></li>
+<li><p><a class="reference internal" href="util.html#_CPPv4N4pvxs6SigIntE" title="pvxs::SigInt"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::SigInt</span></code></a> executes callback on worker thread instead of signal context.</p></li>
+<li><p>Added API</p>
+<ul>
+<li><p><a class="reference internal" href="client.html#_CPPv4N4pvxs6client12Subscription5statsER16SubscriptionStatb" title="pvxs::client::Subscription::stats"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::stats()</span></code></a> and <a class="reference internal" href="source.html#_CPPv4NK4pvxs6server16MonitorControlOp5statsER11MonitorStatb" title="pvxs::server::MonitorControlOp::stats"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::MonitorControlOp::stats()</span></code></a></p></li>
+<li><p><a class="reference internal" href="client.html#_CPPv4N4pvxs6client7Context5closeEv" title="pvxs::client::Context::close"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::close()</span></code></a></p></li>
+<li><p><a class="reference internal" href="typedef.html#_CPPv4NK4pvxs7TypeDef2asERKNSt6stringE" title="pvxs::TypeDef::as"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::TypeDef::as()</span></code></a> overload to change Struct -&gt; StructA.</p></li>
+<li><p><a class="reference internal" href="value.html#_CPPv4N4pvxs5Value5clearEv" title="pvxs::Value::clear"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::clear()</span></code></a></p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="oct-2022">
+<h2>1.0.1 (Oct 2022)<a class="headerlink" href="#oct-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fix c++17 compilation issue</p></li>
+<li><p>Allow TypeDef to append StructA and UnionA</p></li>
+<li><p>Reduce “non-existent IOID” noise</p></li>
+<li><p>Fix CMD_MESSAGE handling</p></li>
+<li><p>Fix locking of client monitor during pop()</p></li>
+<li><p>Calculate buffer sizes in terms of OS socket buffer limit</p></li>
+<li><p>Fix low water mark calculation</p></li>
+<li><p>Fix Timer ownership (expert API)</p></li>
+<li><p>Avoid <code class="docutils literal notranslate"><span class="pre">assert()</span></code> when client asked to search for PV names longer than 1400 bytes.</p></li>
+</ul>
+</section>
+<section id="sept-2022">
+<h2>1.0.0 (Sept 2022)<a class="headerlink" href="#sept-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Add <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::ConnectBuilder::server</span></code></p></li>
+<li><p>Add hold-off timer when reconnecting to a specific server.</p></li>
+<li><p>Fix missing closing quote when printing a <code class="docutils literal notranslate"><span class="pre">String</span></code> in tree format.</p></li>
+</ul>
+</section>
+<section id="june-2022">
+<h2>0.3.1 (June 2022)<a class="headerlink" href="#june-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fix ifaddrs::ifa_addr can be NULL</p></li>
+<li><p>Limit beacon tracking by size as well as time</p></li>
+</ul>
+</section>
+<section id="may-2022">
+<h2>0.3.0 (May 2022)<a class="headerlink" href="#may-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Fix protocol <strong>incompatibility</strong> with Big Endian servers.</p></li>
+<li><p>Add support for IPv4 multicast and IPv6 uni/multicast for UDP.  And IPv6 unicast for TCP.
+See <a class="reference internal" href="netconfig.html#addrspec"><span class="std std-ref">Address Spec.</span></a> for entries which may now appear in <strong>EPICS_PVA*_ADDR_LIST</strong>.</p></li>
+<li><p>PVXS now attempts to fanout unicast searches through the loopback interface, and
+to handle <code class="docutils literal notranslate"><span class="pre">CMD_ORIGIN_TAG</span></code> messages (aka. the local multicast hack).</p></li>
+<li><p>Add <a class="reference internal" href="client.html#_CPPv4N4pvxs6client7Context8discoverERRNSt8functionIFvRK10DiscoveredEEE" title="pvxs::client::Context::discover"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::discover()</span></code></a> to enumerate and track PVA Servers.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pvxlist</span></code> add “continuous” mode.  (eg. <code class="docutils literal notranslate"><span class="pre">pvxlist</span> <span class="pre">-v</span> <span class="pre">-w</span> <span class="pre">0</span></code>)
+To immediately Discover new servers, then continue listening for Beacons to detect
+as server go up and down (like <code class="docutils literal notranslate"><span class="pre">casw</span></code>).
+Also, to be gentler on your network, add <code class="docutils literal notranslate"><span class="pre">-P</span></code> to skip initial Discovery ping,
+and only listen for Beacons.</p></li>
+</ul>
+</section>
+<section id="jan-2022">
+<h2>0.2.2 (Jan 2022)<a class="headerlink" href="#jan-2022" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>No functional change to libraries.</p></li>
+<li><p>Updates to python packaging.</p></li>
+</ul>
+</section>
+<section id="oct-2021">
+<h2>0.2.1 (Oct 2021)<a class="headerlink" href="#oct-2021" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fix <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxsmonitor</span></code> hang when interrupted (Ctrl+c).</p></li>
+<li><p>Fix <a class="reference internal" href="client.html#_CPPv4NK4pvxs6client12Subscription16shared_from_thisEv" title="pvxs::client::Subscription::shared_from_this"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::shared_from_this()</span></code></a> leaking internal reference.</p></li>
+<li><p>Fix SharedPV potential race conditions involving “current” Value.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Changes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Ignore beacons with protocol field other than “tcp”.  Forward compatibility.</p></li>
+<li><p>Limit packet hex dumps to 64 bytes.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">testStrMatch()</span></code> now specified POSIX regular expression syntax.</p></li>
+<li><p>Client operations builders <code class="docutils literal notranslate"><span class="pre">rawRequest(Value())</span></code> is now a no-op.
+Previously produced a non-nonsensical empty request.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Additions</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Add <a class="reference internal" href="client.html#_CPPv4N4pvxs6client7Context7fromEnvEv" title="pvxs::client::Context::fromEnv"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::fromEnv()</span></code></a>.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="july-2021">
+<h2>0.2.0 (July 2021)<a class="headerlink" href="#july-2021" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Resolve ambiguity between Value::as(T&amp;) and Value::as(FN&amp;&amp;) causing issue with GCC 4.8.</p></li>
+<li><p>Fix encoding of (Sub)Struct w/ valid set.</p></li>
+<li><p>Fix locking issue with client tracking of server beacons.</p></li>
+<li><p>Fix binding to specific interface addresses.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Changes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>To simplify usage in situations with complex threading, many client methods avoid unnecessary
+synchronization with the client worker thread.
+Cancellation still synchronizes by default, but this may now be controlled with
+the new syncCancel() Builder methods.  cf. <a class="reference internal" href="client.html#_CPPv4N4pvxs6client6detail13CommonBuilder10syncCancelEb" title="pvxs::client::detail::CommonBuilder::syncCancel"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::detail::CommonBuilder::syncCancel()</span></code></a>.</p></li>
+<li><p>Client Op Builder server() method now implemented.</p></li>
+<li><p>Client channel cache now periodically prunes unused Channels automatically.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Additions</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Add server ignore address list.  cf. <a class="reference internal" href="server.html#_CPPv4N4pvxs6server6Config11ignoreAddrsE" title="pvxs::server::Config::ignoreAddrs"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::ignoreAddrs</span></code></a>.  Configured from $EPICS_PVAS_IGNORE_ADDR_LIST.</p></li>
+<li><p>Allow TCP timeout to be configured.</p></li>
+<li><p>Add <a class="reference internal" href="client.html#_CPPv4N4pvxs6client7Context7connectERKNSt6stringE" title="pvxs::client::Context::connect"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::connect()</span></code></a> to force Channel creation and retention.</p></li>
+<li><p>Add <a class="reference internal" href="client.html#_CPPv4NK4pvxs6client12Subscription16shared_from_thisEv" title="pvxs::client::Subscription::shared_from_this"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::shared_from_this()</span></code></a> which can be used with eg. the new <a class="reference internal" href="util.html#_CPPv4I0EN4pvxs8MPMCFIFOE" title="pvxs::MPMCFIFO"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::MPMCFIFO</span></code></a> to create a work queue.</p></li>
+<li><p>Add <a class="reference internal" href="source.html#_CPPv4NK4pvxs6server6ExecOp9pvRequestEv" title="pvxs::server::ExecOp::pvRequest"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::ExecOp::pvRequest()</span></code></a></p></li>
+<li><p>Semi-public <a class="reference internal" href="details.html#expertapi"><span class="std std-ref">Expert APIs</span></a>.</p></li>
+<li><p>Update bundled libevent</p></li>
+<li><p>Preliminary support for RTEMS 5.1 with libbsd</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="may-2021">
+<h2>0.1.5 (May 2021)<a class="headerlink" href="#may-2021" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug Fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fix several previously unusable template methods of <a class="reference internal" href="value.html#_CPPv4I00EN4pvxs12shared_arrayE" title="pvxs::shared_array"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array</span></code></a></p></li>
+<li><p>Fix <a class="reference internal" href="util.html#_CPPv4N4pvxs16logger_level_setEPKc5Level" title="pvxs::logger_level_set"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::logger_level_set()</span></code></a></p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Changes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Default logger level changed from Err to Warn.</p></li>
+<li><p>Server warns when falling back from requested TCP port.</p></li>
+<li><p>Public headers include &lt;iosfwd&gt; instead of &lt;ostream&gt;.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Additions</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Add <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt6NTEnumE" title="pvxs::nt::NTEnum"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::NTEnum</span></code></a></p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="apr-2021">
+<h2>0.1.4 (APR 2021)<a class="headerlink" href="#apr-2021" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug Fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fix potential locking issue monitor queue</p></li>
+<li><p>Fix potential locking issue in Shared PV with concurrent open()/close() vs. post()</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Additions</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Add <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt9TimeStampE" title="pvxs::nt::TimeStamp"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::TimeStamp</span></code></a> and <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt5AlarmE" title="pvxs::nt::Alarm"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::Alarm</span></code></a>.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="feb-2021">
+<h2>0.1.3 (FEB 2021)<a class="headerlink" href="#feb-2021" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug Fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fix regression from 0.1.2 causing possible crash on targets defining SO_RXQ_OVFL (eg. Linux).</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="id3">
+<h2>0.1.2 (FEB 2021)<a class="headerlink" href="#id3" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug Fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fix TCP connection “stall” (incorrect deferred read).</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Changes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Raise UDP search reply processing limit.</p></li>
+<li><p>Try not to fragment UDP search packets.</p></li>
+<li><p>mailbox example can serve more than one PV.</p></li>
+<li><p>Indent printed field=value in delta output mode.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="jan-2021">
+<h2>0.1.1 (Jan 2021)<a class="headerlink" href="#jan-2021" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Bug Fixes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Fix decoding of “null” string.  Addresses interoperability with pvAccessJava.</p></li>
+<li><p>Increase inactivity timeout for TCP connections from 30 to 40 seconds.  Also for interoperability with pvAccessJava.</p></li>
+<li><p>Client search requests incorrectly set Server direction bit.  (existing servers don’t enforce this)</p></li>
+<li><p>Improved handling of errors resulting from pvRequest processing.  eg. field selection which doesn’t select any fields.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Added Features</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Added <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">PVXS_ABI_VERSION</span></code> et al. to <em>pvxs/version.h</em></p></li>
+<li><p>Add <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">testThrowsMatch</span></code> and <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">testStrMatch</span></code> to <em>pvxs/unitttest.h</em></p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Changes</p></li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li><p>Changed name of automatic Sources <code class="docutils literal notranslate"><span class="pre">&quot;builtin&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;server&quot;</span></code> to <code class="docutils literal notranslate"><span class="pre">&quot;__builtin&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;__server&quot;</span></code>.
+Document that Source names beginning with <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">__</span></code> are reserved.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="dec-2020">
+<h2>0.1.0 (Dec 2020)<a class="headerlink" href="#dec-2020" title="Permalink to this heading">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>Initial Release</p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased">1.3.3 (UNRELEASED)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oct-2024">1.3.2 (Oct 2024)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dec-2023">1.3.1 (Dec 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">1.3.0 (Dec 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oct-2023">1.2.4 (Oct 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sept-2023">1.2.3 (Sept 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#june-2023">1.2.2 (June 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">1.2.1 (June 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#may-2023">1.2.0 (May 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#april-2023">1.1.4 (April 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mar-2023">1.1.3 (Mar 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feb-2023">1.1.2 (Feb 2023)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dec-2022">1.1.1 (Dec 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nov-2022">1.1.0 (Nov 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oct-2022">1.0.1 (Oct 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sept-2022">1.0.0 (Sept 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#june-2022">0.3.1 (June 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#may-2022">0.3.0 (May 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jan-2022">0.2.2 (Jan 2022)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#oct-2021">0.2.1 (Oct 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#july-2021">0.2.0 (July 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#may-2021">0.1.5 (May 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apr-2021">0.1.4 (APR 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feb-2021">0.1.3 (FEB 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">0.1.2 (FEB 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jan-2021">0.1.1 (Jan 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dec-2020">0.1.0 (Dec 2020)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="details.html" title="previous chapter">Details</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/releasenotes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

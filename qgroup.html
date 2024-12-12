@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>QSRV Groups &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="PVA Links" href="pvalink.html" />
+    <link rel="prev" title="IOC Integration" href="ioc.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="qsrv-groups">
+<span id="grouppv"></span><h1>QSRV Groups<a class="headerlink" href="#qsrv-groups" title="Permalink to this heading">¶</a></h1>
+<p>By default no Group PVs are defined.</p>
+<p>A Group PV is a mapping of values stored in one or more database records
+and made visible through a PVA structure.</p>
+<p>A Group is defined using a JSON syntax.
+Groups are defined with respect to a <em>Group Name</em>, which is also the PV name used when accessing the group.
+Unlike records, the “field” of a group have a different meaning than the fields of a record.
+Group field names are <em>not</em> part of the PV name.</p>
+<p>A group definition may be split among several records, or included in separate JSON file(s).
+For example of a group including two records is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="s2">&quot;rec:X&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">Q</span><span class="p">:</span><span class="n">group</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;grp:name&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">+</span><span class="n">channel</span><span class="p">:</span><span class="s2">&quot;VAL&quot;</span><span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+<span class="n">record</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="s2">&quot;rec:Y&quot;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">Q</span><span class="p">:</span><span class="n">group</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;grp:name&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;Y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">+</span><span class="n">channel</span><span class="p">:</span><span class="s2">&quot;VAL&quot;</span><span class="p">}</span> <span class="c1"># .VAL in enclosing record()</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Or equivalently with separate .db file and .json files.
+Use <code class="docutils literal notranslate"><span class="pre">dbLoadGroup()</span></code> to load .json files.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Store in some .db</span>
+<span class="n">record</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="s2">&quot;rec:X&quot;</span><span class="p">)</span> <span class="p">{}</span>
+<span class="n">record</span><span class="p">(</span><span class="n">ai</span><span class="p">,</span> <span class="s2">&quot;rec:Y&quot;</span><span class="p">)</span> <span class="p">{}</span>
+<span class="c1"># Store in some .json</span>
+<span class="p">{</span>
+    <span class="s2">&quot;grp:name&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;X&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;+channel&quot;</span><span class="p">:</span><span class="s2">&quot;rec:X.VAL&quot;</span><span class="p">},</span> <span class="c1"># full PV name</span>
+        <span class="s2">&quot;Y&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;+channel&quot;</span><span class="p">:</span><span class="s2">&quot;rec:Y.VAL&quot;</span><span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This group, named <code class="docutils literal notranslate"><span class="pre">grp:name</span></code>, has two group fields <code class="docutils literal notranslate"><span class="pre">X</span></code> and <code class="docutils literal notranslate"><span class="pre">Y</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pvget grp:name
+grp:name
+structure
+    epics:nt/NTScalar:1.0 X
+        double value 0
+        alarm_t alarm INVALID DRIVER UDF
+        time_t timeStamp &lt;undefined&gt; 0
+...
+    epics:nt/NTScalar:1.0 Y
+        double value 0
+        alarm_t alarm INVALID DRIVER UDF
+        time_t timeStamp &lt;undefined&gt; 0
+...
+</pre></div>
+</div>
+<p>So <code class="docutils literal notranslate"><span class="pre">pvget</span> <span class="pre">grp:name</span></code> is compatible to <code class="docutils literal notranslate"><span class="pre">pvget</span> <span class="pre">rec:X</span> <span class="pre">rec:Y</span></code> with the added
+benefit that with the former, values from the two records are read atomically on the server,
+and delivered together.</p>
+<section id="json-reference">
+<span id="groupjson"></span><h2>JSON Reference<a class="headerlink" href="#json-reference" title="Permalink to this heading">¶</a></h2>
+<p>A Group <a class="reference external" href="qsrv2-schema-0.json">JSON schema</a> definition file is available.
+Keys beginning appear in contexts where a name may be either a data field name,
+or a special key.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">record</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">Q</span><span class="p">:</span><span class="n">group</span><span class="p">,</span> <span class="p">{</span>
+        <span class="s2">&quot;&lt;group_name&gt;&quot;</span><span class="p">:{</span>
+            <span class="o">+</span><span class="nb">id</span><span class="p">:</span><span class="s2">&quot;some/NT:1.0&quot;</span><span class="p">,</span>  <span class="c1"># top level ID</span>
+            <span class="o">+</span><span class="n">atomic</span><span class="p">:</span><span class="n">true</span><span class="p">,</span>
+            <span class="s2">&quot;&lt;field.name&gt;&quot;</span><span class="p">:{</span>
+                <span class="o">+</span><span class="nb">type</span><span class="p">:</span><span class="s2">&quot;scalar&quot;</span><span class="p">,</span>
+                <span class="o">+</span><span class="n">channel</span><span class="p">:</span><span class="s2">&quot;VAL&quot;</span><span class="p">,</span>
+                <span class="o">+</span><span class="nb">id</span><span class="p">:</span><span class="s2">&quot;another/NT:1.0&quot;</span><span class="p">,</span>
+                <span class="o">+</span><span class="n">trigger</span><span class="p">:</span><span class="s2">&quot;*&quot;</span><span class="p">,</span>
+                <span class="o">+</span><span class="n">putorder</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="c1"># special case adds time/alarm meta-data fields</span>
+            <span class="c1"># at top level</span>
+            <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">+</span><span class="nb">type</span><span class="p">:</span><span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="o">+</span><span class="n">channel</span><span class="p">:</span><span class="s2">&quot;VAL&quot;</span><span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">})</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When using separate JSON files, mappings must be quoted: e.g. <code class="docutils literal notranslate"><span class="pre">+id</span></code> should be <code class="docutils literal notranslate"><span class="pre">&quot;+id&quot;</span></code>.</p>
+</div>
+<p>Mapping <code class="docutils literal notranslate"><span class="pre">+type</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scalar</span></code> (default) places an NTScalar or NTScalarArray as a sub-structure.  (see <a class="reference internal" href="ntscalar.html#ntscalar"><span class="std std-ref">NTScalar and NTScalarArray</span></a>)</p></li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">plain</span></code> ignores all meta-data and places only the “value” as a field.</dt><dd><p>The field placed will have the type of the <code class="docutils literal notranslate"><span class="pre">value</span></code> field of the equivalent NTScalar/NTScalarArray as a field.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">any</span></code> places a variant union into which the “value” is stored.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">meta</span></code> places only the “alarm” and “timeStamp” fields of <code class="docutils literal notranslate"><span class="pre">scalar</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">structure</span></code> places only the associated <code class="docutils literal notranslate"><span class="pre">+id</span></code>.  Has no <code class="docutils literal notranslate"><span class="pre">+channel</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">proc</span></code> places no fields.  The associated <code class="docutils literal notranslate"><span class="pre">+channel</span></code> is processed on PUT.
+“proc” mappings will almost always set <code class="docutils literal notranslate"><span class="pre">+putorder</span></code> to control the relative
+ordering of record processing.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">const</span></code> places the value of the <code class="docutils literal notranslate"><span class="pre">+const</span></code> mapping, so it doesn’t use any
+information from the enclosing record, if there is any.</p></li>
+</ul>
+<p>Mapping <code class="docutils literal notranslate"><span class="pre">+channel</span></code>:</p>
+<p>Most mapping <code class="docutils literal notranslate"><span class="pre">+type</span></code> require a <code class="docutils literal notranslate"><span class="pre">+channel</span></code>.
+The most common record field to map is <code class="docutils literal notranslate"><span class="pre">+channel:</span> <span class="pre">&quot;VAL&quot;</span></code>.
+When included in an <code class="docutils literal notranslate"><span class="pre">info(Q:group,</span> <span class="pre">...</span></code>, the <code class="docutils literal notranslate"><span class="pre">+channel</span></code> must only name a field of the enclosing record.
+(eg. <code class="docutils literal notranslate"><span class="pre">+channel:&quot;VAL&quot;</span></code>)
+When in a separate JSON file, <code class="docutils literal notranslate"><span class="pre">+channel</span></code> must be a full PV name, beginning with a record or alias name.
+(eg. <code class="docutils literal notranslate"><span class="pre">&quot;+channel&quot;:&quot;record:name.VAL&quot;</span></code>)</p>
+<p>Mapping <code class="docutils literal notranslate"><span class="pre">+trigger</span></code>:</p>
+<p>Triggers define when and which <strong>changes to the constituent field are translated into a subscription update</strong> to the group.
+<code class="docutils literal notranslate"><span class="pre">+trigger</span></code> may be set to:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> (default) means that changes to the field do not cause a subscription update.  (see note below)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;*&quot;</span></code> causes a subscription update containing the most recent values/meta-data of all group fields.</p></li>
+<li><p>A comma separated list of field names causes an update with the most recent values of <strong>only</strong> the listed group fields.
+eg. <code class="docutils literal notranslate"><span class="pre">+trigger:</span> <span class="pre">&quot;value.A,</span> <span class="pre">value.B&quot;</span></code> doesn’t update <code class="docutils literal notranslate"><span class="pre">labels</span></code> or <code class="docutils literal notranslate"><span class="pre">timeStamp</span></code>.</p></li>
+</ul>
+<p>For a new group definition, including records from one or more record processing chains,
+the last record in that chain should have a <code class="docutils literal notranslate"><span class="pre">+trigger</span></code> mapping listing the group fields
+updated by records in that chain.</p>
+<p>In the common case where a group is mapped to records in only one processing chain,
+then the last mapped record in that chain should have <code class="docutils literal notranslate"><span class="pre">+trigger:</span> <span class="pre">&quot;*&quot;</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>As a special case.  A group with no <code class="docutils literal notranslate"><span class="pre">+trigger</span></code> mappings at all will function as if every mapping
+includes a <code class="docutils literal notranslate"><span class="pre">+trigger</span></code> mapping for itself.
+This is done so that such a situation does not cause confusion by posting no monitor updates at all.
+However, this situation will almost never give desired behaviour as changes to records which
+could otherwise be atomic will be split into multiple subscription updates.</p>
+</div>
+<p>Mapping <code class="docutils literal notranslate"><span class="pre">+putorder</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">+putorder</span></code> must be set for a field to be writable through a group PV.
+When more than one mapping has an order defined, the numeric value is used to define
+the order in which the associated records are processed (in increasing order).</p>
+<p>Additionally, the values of <code class="docutils literal notranslate"><span class="pre">+putorder</span></code> also control the order of fields in the group PV definition.
+This control is necessary only in limited cases, such as the <code class="docutils literal notranslate"><span class="pre">NTTable</span></code> specification,
+where the iteration order of fields must match the order of the <code class="docutils literal notranslate"><span class="pre">labels</span></code> array.</p>
+<p><code class="docutils literal notranslate"><span class="pre">+const</span></code> must be set when using <code class="docutils literal notranslate"><span class="pre">+type:</span> <span class="pre">&quot;const&quot;</span></code>. It accepts literals, e.g. integers, floats, and strings.</p>
+</section>
+<section id="understanding-groups">
+<span id="understandinggroups"></span><h2>Understanding Groups<a class="headerlink" href="#understanding-groups" title="Permalink to this heading">¶</a></h2>
+<section id="nttable-group-example">
+<h3>NTTable Group Example<a class="headerlink" href="#nttable-group-example" title="Permalink to this heading">¶</a></h3>
+<p>One motivating use case for groups involves moving tabular data, encoded as “NTTable”.
+The overall goal of the <code class="docutils literal notranslate"><span class="pre">TST:Tbl</span></code> group PV is to take what would be a series of
+discrete, non-atomic, network operations</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">caput</span> <span class="o">-</span><span class="n">a</span> <span class="n">TST</span><span class="p">:</span><span class="n">A</span> <span class="n">X</span> <span class="mi">1</span> <span class="mi">2</span> <span class="mi">3</span>
+<span class="n">caput</span> <span class="o">-</span><span class="n">a</span> <span class="n">TST</span><span class="p">:</span><span class="n">B</span> <span class="n">X</span> <span class="mi">5</span> <span class="mi">6</span> <span class="mi">7</span>
+<span class="n">caput</span> <span class="n">TST</span><span class="p">:</span><span class="n">Save</span><span class="o">.</span><span class="n">PROC</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>can instead be a single, atomic, network operation</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pvput</span> <span class="n">TST</span><span class="p">:</span><span class="n">Tbl</span> <span class="n">value</span><span class="o">.</span><span class="n">A</span><span class="o">=</span><span class="s1">&#39;[1,2,3]&#39;</span> <span class="n">value</span><span class="o">.</span><span class="n">B</span><span class="o">=</span><span class="s1">&#39;[5,6,7]&#39;</span>
+</pre></div>
+</div>
+<p>A subscriber sees:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pvmonitor</span> <span class="n">TST</span><span class="p">:</span><span class="n">Tbl</span>
+<span class="n">TST</span><span class="p">:</span><span class="n">Tbl</span> <span class="o">&lt;</span><span class="n">undefined</span><span class="o">&gt;</span>               <span class="n">INVALID</span> <span class="n">DRIVER</span> <span class="n">UDF</span>
+<span class="s2">&quot;Label A&quot;</span> <span class="s2">&quot;Label B&quot;</span>
+<span class="n">TST</span><span class="p">:</span><span class="n">Tbl</span> <span class="mi">2023</span><span class="o">-</span><span class="mi">08</span><span class="o">-</span><span class="mi">30</span> <span class="mi">09</span><span class="p">:</span><span class="mi">55</span><span class="p">:</span><span class="mf">19.999</span>
+<span class="s2">&quot;Label A&quot;</span> <span class="s2">&quot;Label B&quot;</span>
+        <span class="mi">1</span>         <span class="mi">5</span>
+        <span class="mi">2</span>         <span class="mi">6</span>
+        <span class="mi">3</span>         <span class="mi">7</span>
+</pre></div>
+</div>
+<p>This effect is achieved by mapping a table of two columns (“A” and “B”) onto two <code class="docutils literal notranslate"><span class="pre">aao</span></code> records.
+With a third record to take some action once both are updated.</p>
+<p>The following is meant to illustrate the mapping between the individual records,
+and the fields of the group PV <code class="docutils literal notranslate"><span class="pre">TST:Tbl</span></code>.</p>
+<p>On the left hand side are the contents of a file <code class="docutils literal notranslate"><span class="pre">test.db</span></code>,
+and on the right the output of <code class="docutils literal notranslate"><span class="pre">pvget</span> <span class="pre">TST:Tbl</span></code>.</p>
+<hr/><img alt="_images/nt_table1.svg" src="_images/nt_table1.svg" /><p>Here the <code class="docutils literal notranslate"><span class="pre">TST:Labels_</span></code> record contributes two mappings to the <code class="docutils literal notranslate"><span class="pre">TST:Tbl</span></code> Group.
+(a record might contribute mappings to more than one group)</p>
+<p>This <code class="docutils literal notranslate"><span class="pre">+id</span></code> mapping contributes only the static type label string.
+it could be attached to any of the four records, and is arbitrarily placed with this one.</p>
+<p>Necessarily, the <code class="docutils literal notranslate"><span class="pre">label</span></code> mappings provides the column labels of the “NTTable” definition.
+So the record <code class="docutils literal notranslate"><span class="pre">TST:Labels_</span></code> field <code class="docutils literal notranslate"><span class="pre">VAL</span></code> is mapped into <code class="docutils literal notranslate"><span class="pre">TST:Tbl</span></code> as <code class="docutils literal notranslate"><span class="pre">labels</span></code>.
+With <code class="docutils literal notranslate"><span class="pre">+type:</span> <span class="pre">&quot;plain&quot;</span></code>, this appears as a string array (“string[]”).</p>
+<hr/><img alt="_images/nt_table2.svg" src="_images/nt_table2.svg" /><p>The <code class="docutils literal notranslate"><span class="pre">TST:A</span></code> record contributes only a <code class="docutils literal notranslate"><span class="pre">value.A</span></code> field.
+With <code class="docutils literal notranslate"><span class="pre">+type:</span> <span class="pre">&quot;plain&quot;</span></code>, this appears as a string array (“double[]”).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">value.A</span></code> mapping also sets <code class="docutils literal notranslate"><span class="pre">+putorder:</span> <span class="pre">0</span></code>, which is necessary to allow this group member
+field to be changed through a PUT to the Group PV.
+The numeric value controls the order in which records effected by a PUT are processed.
+Processing occurs in order of increasing <code class="docutils literal notranslate"><span class="pre">+putorder</span></code>.</p>
+<hr/><img alt="_images/nt_table3.svg" src="_images/nt_table3.svg" /><p>The <code class="docutils literal notranslate"><span class="pre">TST:B</span></code> record contributes both a <code class="docutils literal notranslate"><span class="pre">value.B</span></code> field in the same manner as the A field/column.</p>
+<p>Additionally, it contributes a special <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> field with <code class="docutils literal notranslate"><span class="pre">+type:</span> <span class="pre">&quot;meta&quot;</span></code>.
+This exposes the <code class="docutils literal notranslate"><span class="pre">TST:B.VAL</span></code> timestamp and alarm meta-data as the sub-structure
+fields <code class="docutils literal notranslate"><span class="pre">alarm</span></code> and <code class="docutils literal notranslate"><span class="pre">timeStamp</span></code>.</p>
+<hr/><img alt="_images/nt_table4.svg" src="_images/nt_table4.svg" /><p>The final record <code class="docutils literal notranslate"><span class="pre">TST:Save</span></code> does not contribute any data fields.
+Instead it contributes a special <code class="docutils literal notranslate"><span class="pre">+type:</span> <span class="pre">&quot;proc&quot;</span></code> mapping.
+Also, it contributes a <code class="docutils literal notranslate"><span class="pre">+trigger</span></code> mapping so that processing this record will
+trigger a subscription/monitor update to all (changed) fields.</p>
+<p>Note, the field name <code class="docutils literal notranslate"><span class="pre">_save</span></code> only needs to be locally unique within the group,
+but is otherwise ignored.</p>
+<section id="database-listing">
+<h4>Database Listing<a class="headerlink" href="#database-listing" title="Permalink to this heading">¶</a></h4>
+<p>Loading the following with.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dbLoadRecords</span><span class="p">(</span><span class="s2">&quot;table.db&quot;</span><span class="p">,</span> <span class="s2">&quot;N=TST:,LBL1=Label A,LBL2=Label B,PO1=0,PO2=1&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span>
+<span class="linenos"> 2</span>record(aai, &quot;$(N)Labels_&quot;) {
+<span class="linenos"> 3</span>    field(FTVL, &quot;STRING&quot;)
+<span class="linenos"> 4</span>    field(NELM, &quot;2&quot;)
+<span class="linenos"> 5</span>    field(INP , {const:[&quot;$(LBL1)&quot;, &quot;$(LBL2)&quot;]})
+<span class="linenos"> 6</span>    info(Q:group, {
+<span class="linenos"> 7</span>        &quot;$(N)Tbl&quot;:{
+<span class="linenos"> 8</span>            +id:&quot;epics:nt/NTTable:1.0&quot;,
+<span class="linenos"> 9</span>            &quot;labels&quot;:{+type:&quot;plain&quot;, +channel:&quot;VAL&quot;}
+<span class="linenos">10</span>        }
+<span class="linenos">11</span>    })
+<span class="linenos">12</span>    field(TPRO, &quot;1&quot;)
+<span class="linenos">13</span>}
+<span class="linenos">14</span>
+<span class="linenos">15</span>record(aao, &quot;$(N)A&quot;) {
+<span class="linenos">16</span>    field(FTVL, &quot;DOUBLE&quot;)
+<span class="linenos">17</span>    field(NELM, &quot;10&quot;)
+<span class="linenos">18</span>    info(Q:group, {
+<span class="linenos">19</span>        &quot;$(N)Tbl&quot;:{
+<span class="linenos">20</span>            &quot;value.A&quot;:{+type:&quot;plain&quot;, +channel:&quot;VAL&quot;, +putorder:$(PO1)}
+<span class="linenos">21</span>        }
+<span class="linenos">22</span>    })
+<span class="linenos">23</span>    field(TPRO, &quot;1&quot;)
+<span class="linenos">24</span>}
+<span class="linenos">25</span>
+<span class="linenos">26</span>record(aao, &quot;$(N)B&quot;) {
+<span class="linenos">27</span>    field(FTVL, &quot;DOUBLE&quot;)
+<span class="linenos">28</span>    field(NELM, &quot;10&quot;)
+<span class="linenos">29</span>    info(Q:group, {
+<span class="linenos">30</span>        &quot;$(N)Tbl&quot;:{
+<span class="linenos">31</span>            &quot;&quot;:{+type:&quot;meta&quot;, +channel:&quot;VAL&quot;},
+<span class="linenos">32</span>            &quot;value.B&quot;:{+type:&quot;plain&quot;, +channel:&quot;VAL&quot;, +putorder:$(PO2)}
+<span class="linenos">33</span>        }
+<span class="linenos">34</span>    })
+<span class="linenos">35</span>    field(TPRO, &quot;1&quot;)
+<span class="linenos">36</span>}
+<span class="linenos">37</span>
+<span class="linenos">38</span>record(longout, &quot;$(N)Save&quot;) {
+<span class="linenos">39</span>    field(MDEL, &quot;-1&quot;) # ensure we always trigger group monitor
+<span class="linenos">40</span>    field(TPRO, &quot;1&quot;)
+<span class="linenos">41</span>    info(Q:group, {
+<span class="linenos">42</span>        &quot;$(N)Tbl&quot;:{
+<span class="linenos">43</span>            &quot;_save&quot;:{+type:&quot;proc&quot;,
+<span class="linenos">44</span>                     +channel:&quot;VAL&quot;,
+<span class="linenos">45</span>                     +putorder:2,
+<span class="linenos">46</span>                     +trigger:&quot;*&quot;}
+<span class="linenos">47</span>        }
+<span class="linenos">48</span>    })
+<span class="linenos">49</span>}
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ioc.html#id1">IOC Shell</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioc.html#single-pv">Single PV</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="ioc.html#group-pv">Group PV</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">QSRV Groups</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ioc.html#access-security">Access Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioc.html#pvaccess-links">PVAccess Links</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="ioc.html">IOC Integration</a><ul>
+      <li>Previous: <a href="ioc.html" title="previous chapter">IOC Integration</a></li>
+      <li>Next: <a href="pvalink.html" title="next chapter">PVA Links</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/qgroup.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

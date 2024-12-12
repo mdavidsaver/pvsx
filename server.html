@@ -1,0 +1,455 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Server API &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SharedPV and StaticSource" href="sharedpv.html" />
+    <link rel="prev" title="Client API" href="client.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="server-api">
+<span id="serverapi"></span><h1>Server API<a class="headerlink" href="#server-api" title="Permalink to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sharedpv.html">SharedPV and StaticSource</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source.html">Data Source</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="source.html#threading">Threading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source.html#ownership-and-lifetime">Ownership and Lifetime</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source.html#api">API</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Server</span></code></a> represents a PVA protocol server.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/server.h&gt;</span>
+<span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">server</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The basic recipe to run a server using configuration from the process environment is:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">serv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">server</span><span class="o">::</span><span class="n">Config</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="c1">// calls to serv.addPV() or serv.addSource()</span>
+<span class="n">serv</span><span class="p">.</span><span class="n">run</span><span class="p">();</span><span class="w"> </span><span class="c1">// run intil SIGINT or serv.interrupt()</span>
+<span class="c1">// could also call serv.start() and later serv.stop()</span>
+</pre></div>
+</div>
+<p>A useful server will have one or more <a class="reference internal" href="source.html#_CPPv4N4pvxs6server6SourceE" title="pvxs::server::Source"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Source</span></code></a> instances added to it with addSource() method.
+Common usage will be with <a class="reference internal" href="sharedpv.html#_CPPv4N4pvxs6server12StaticSourceE" title="pvxs::server::StaticSource"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::StaticSource</span></code></a> and one or more <a class="reference internal" href="sharedpv.html#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::SharedPV</span></code></a>.</p>
+<p>If more than one Source is added, then an order of precedence is established through
+the “order” argument of addSource().  In the event that more than one Source could
+provide/claim a given PV name, the Source with the lowest “order” will win.</p>
+<section id="configuration">
+<span id="serverconf"></span><h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading">¶</a></h2>
+<p>The recommended starting point when configuring a Server is <a class="reference internal" href="#_CPPv4N4pvxs6server6Config7fromEnvEv" title="pvxs::server::Config::fromEnv"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::fromEnv()</span></code></a>
+which will use the following <a class="reference internal" href="netconfig.html#environ"><span class="std std-ref">Environment variables</span></a> when set.</p>
+<p>Entries naming multiple <a class="reference internal" href="netconfig.html#environ"><span class="std std-ref">Environment variables</span></a> will prefer the left most which is set.
+eg. <code class="docutils literal notranslate"><span class="pre">EPICS_PVA_ADDR_LIST</span></code> is only checked if <code class="docutils literal notranslate"><span class="pre">EPICS_PVAS_BEACON_ADDR_LIST</span></code> is unset.</p>
+<dl class="simple">
+<dt>EPICS_PVAS_INTF_ADDR_LIST</dt><dd><p>Space separated list of local interface addresses to which the server will bind.
+Port numbers are parsed and ignore.
+Sets <a class="reference internal" href="#_CPPv4N4pvxs6server6Config10interfacesE" title="pvxs::server::Config::interfaces"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::interfaces</span></code></a></p>
+</dd>
+<dt>EPICS_PVAS_BEACON_ADDR_LIST or EPICS_PVA_ADDR_LIST</dt><dd><p>Space separated list of unicast or broadcast addresses.
+This list is supplemented all local broadcast addresses if auto-beacon is YES.
+Sets <a class="reference internal" href="#_CPPv4N4pvxs6server6Config18beaconDestinationsE" title="pvxs::server::Config::beaconDestinations"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::beaconDestinations</span></code></a></p>
+</dd>
+<dt>EPICS_PVAS_AUTO_BEACON_ADDR_LIST or EPICS_PVA_AUTO_ADDR_LIST</dt><dd><p>YES or NO.
+Sets <a class="reference internal" href="#_CPPv4N4pvxs6server6Config11auto_beaconE" title="pvxs::server::Config::auto_beacon"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::auto_beacon</span></code></a></p>
+</dd>
+<dt>EPICS_PVAS_SERVER_PORT or EPICS_PVA_SERVER_PORT</dt><dd><p>Single integer.
+Preferred TCP port to bind.
+If already in use then a random port will be chosen.
+Sets <a class="reference internal" href="#_CPPv4N4pvxs6server6Config8tcp_portE" title="pvxs::server::Config::tcp_port"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::tcp_port</span></code></a></p>
+</dd>
+<dt>EPICS_PVAS_BROADCAST_PORT or EPICS_PVA_BROADCAST_PORT</dt><dd><p>Single integer.
+UDP port to bind.
+If already in use, then an exception is thrown.
+Sets <a class="reference internal" href="#_CPPv4N4pvxs6server6Config8udp_portE" title="pvxs::server::Config::udp_port"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::udp_port</span></code></a></p>
+</dd>
+<dt>EPICS_PVAS_IGNORE_ADDR_LIST</dt><dd><p>Space separated list of addresses with optional port.
+Port zero is treated as a wildcard to match any port.
+UDP traffic from matched addresses will be ignored with no further processing.</p>
+</dd>
+<dt>EPICS_PVA_CONN_TMO</dt><dd><p>Inactivity timeout for TCP connections.  For compatibility with pvAccessCPP
+a multiplier of 4/3 is applied.  So a value of 30 results in a 40 second timeout.</p>
+</dd>
+</dl>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.3.0: </span>All <strong>*_ADDR_LIST</strong> may contain IPv4 multicast, and IPv6 uni/multicast addresses.</p>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.2.0: </span>Prior to 0.2.0 <code class="docutils literal notranslate"><span class="pre">EPICS_PVA_CONN_TMO</span></code> was ignored.</p>
+</div>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ConfigE">
+<span id="_CPPv3N4pvxs6server6ConfigE"></span><span id="_CPPv2N4pvxs6server6ConfigE"></span><span id="pvxs::server::Config"></span><span class="target" id="structpvxs_1_1server_1_1Config"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Config</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6ConfigE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Configuration for a <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a>. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config8applyEnvEv">
+<span id="_CPPv3N4pvxs6server6Config8applyEnvEv"></span><span id="_CPPv2N4pvxs6server6Config8applyEnvEv"></span><span id="pvxs::server::Config::applyEnv"></span><span class="target" id="structpvxs_1_1server_1_1Config_1aac8af3546c0130658a69da14ea562dad"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ConfigE" title="pvxs::server::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">applyEnv</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config8applyEnvEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>update using defined EPICS_PVA* environment variables </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config9applyDefsERK6defs_t">
+<span id="_CPPv3N4pvxs6server6Config9applyDefsERK6defs_t"></span><span id="_CPPv2N4pvxs6server6Config9applyDefsERK6defs_t"></span><span id="pvxs::server::Config::applyDefs__defs_tCR"></span><span class="target" id="structpvxs_1_1server_1_1Config_1ae7ee61ce2b91add415fd897616be435e"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ConfigE" title="pvxs::server::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">applyDefs</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">defs_t</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">def</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config9applyDefsERK6defs_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>update with definitions as with EPICS_PVA* environment variables. Process environment is not changed. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Config10updateDefsER6defs_t">
+<span id="_CPPv3NK4pvxs6server6Config10updateDefsER6defs_t"></span><span id="_CPPv2NK4pvxs6server6Config10updateDefsER6defs_t"></span><span id="pvxs::server::Config::updateDefs__defs_tRC"></span><span class="target" id="structpvxs_1_1server_1_1Config_1add1fba62383feb30d40ce2181915f9af"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">updateDefs</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">defs_t</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">defs</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Config10updateDefsER6defs_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>extract definitions with environment variable names as keys. Process environment is not changed. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config6expandEv">
+<span id="_CPPv3N4pvxs6server6Config6expandEv"></span><span id="_CPPv2N4pvxs6server6Config6expandEv"></span><span id="pvxs::server::Config::expand"></span><span class="target" id="structpvxs_1_1server_1_1Config_1af3ce4b3b96a640b719900916a852ed4f"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">expand</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config6expandEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Apply rules to translate current requested configuration into one which can actually be loaded based on current host network configuration.</p>
+<p>Explicit use of <a class="reference internal" href="#structpvxs_1_1server_1_1Config_1af3ce4b3b96a640b719900916a852ed4f"><span class="std std-ref">expand()</span></a> is optional as the Context ctor expands any <a class="reference internal" href="#structpvxs_1_1server_1_1Config"><span class="std std-ref">Config</span></a> given. <a class="reference internal" href="#structpvxs_1_1server_1_1Config_1af3ce4b3b96a640b719900916a852ed4f"><span class="std std-ref">expand()</span></a> is provided as a aid to help understand how Context::effective() is arrived at.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Post<span class="colon">:</span></dt>
+<dd class="field-odd"><p>autoAddrList==false </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Config5buildEv">
+<span id="_CPPv3NK4pvxs6server6Config5buildEv"></span><span id="_CPPv2NK4pvxs6server6Config5buildEv"></span><span id="pvxs::server::Config::buildC"></span><span class="target" id="structpvxs_1_1server_1_1Config_1aa3714a62cf294943b5cf464f58406e2a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">build</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Config5buildEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a new <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> using the current configuration. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config10interfacesE">
+<span id="_CPPv3N4pvxs6server6Config10interfacesE"></span><span id="_CPPv2N4pvxs6server6Config10interfacesE"></span><span id="pvxs::server::Config::interfaces__std::vector:ss:"></span><span class="target" id="structpvxs_1_1server_1_1Config_1afa985a1feb434936d393f9e274b250dc"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">interfaces</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config10interfacesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>List of network interface addresses (<strong>not</strong> host names) to which this server will bind. interfaces.empty() treated as an alias for “0.0.0.0”, which may also be given explicitly. Port numbers are optional and unused (parsed and ignored) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config11ignoreAddrsE">
+<span id="_CPPv3N4pvxs6server6Config11ignoreAddrsE"></span><span id="_CPPv2N4pvxs6server6Config11ignoreAddrsE"></span><span id="pvxs::server::Config::ignoreAddrs__std::vector:ss:"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a75564abb09ecfef8eeabbf984b78aebb"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ignoreAddrs</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config11ignoreAddrsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Ignore client requests originating from addresses in this list. Entries must be IP addresses with optional port numbers. Port number zero (default) is treated as a wildcard which matches any port. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config18beaconDestinationsE">
+<span id="_CPPv3N4pvxs6server6Config18beaconDestinationsE"></span><span id="_CPPv2N4pvxs6server6Config18beaconDestinationsE"></span><span id="pvxs::server::Config::beaconDestinations__std::vector:ss:"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a1c342c4f7151b1a1801850d1ec8aea91"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">beaconDestinations</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config18beaconDestinationsE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Addresses (<strong>not</strong> host names) to which (UDP) beacons message will be sent. May include broadcast and/or unicast addresses. Supplemented only if auto_beacon==true </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config8tcp_portE">
+<span id="_CPPv3N4pvxs6server6Config8tcp_portE"></span><span id="_CPPv2N4pvxs6server6Config8tcp_portE"></span><span id="pvxs::server::Config::tcp_port__unsigned-short"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a8915889c7b6f9f1bfa13235b679ba77d"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">short</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tcp_port</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">5075</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config8tcp_portE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>TCP port to bind. Default is 5075. May be zero. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config8udp_portE">
+<span id="_CPPv3N4pvxs6server6Config8udp_portE"></span><span id="_CPPv2N4pvxs6server6Config8udp_portE"></span><span id="pvxs::server::Config::udp_port__unsigned-short"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a29882a3e5ab39c9b560b8e8ea9e94729"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">short</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">udp_port</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">5076</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config8udp_portE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>UDP port to bind. Default is 5076. May be zero, cf. <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a9a742201df62c1d3c2888d4e77ac90a0"><span class="std std-ref">Server::config()</span></a> to find allocated port. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config11auto_beaconE">
+<span id="_CPPv3N4pvxs6server6Config11auto_beaconE"></span><span id="_CPPv2N4pvxs6server6Config11auto_beaconE"></span><span id="pvxs::server::Config::auto_beacon__b"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a3f92b2a9c10c02bb3223bfc80aa203aa"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">auto_beacon</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">true</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config11auto_beaconE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Whether to populate the beacon address list automatically. (recommended) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config10tcpTimeoutE">
+<span id="_CPPv3N4pvxs6server6Config10tcpTimeoutE"></span><span id="_CPPv2N4pvxs6server6Config10tcpTimeoutE"></span><span id="pvxs::server::Config::tcpTimeout__double"></span><span class="target" id="structpvxs_1_1server_1_1Config_1aba443777241275c0f9cd491e6809d9d7"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tcpTimeout</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">40.0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config10tcpTimeoutE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Inactivity timeout interval for TCP connections. (seconds) <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config4guidE">
+<span id="_CPPv3N4pvxs6server6Config4guidE"></span><span id="_CPPv2N4pvxs6server6Config4guidE"></span><span id="pvxs::server::Config::guid__ServerGUID"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a625cfffd7146c273587adc727e617570"></span><span class="n"><span class="pre">ServerGUID</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">guid</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="p"><span class="pre">{</span></span><span class="p"><span class="pre">}</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config4guidE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> unique ID. Only meaningful in readback via <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a9a742201df62c1d3c2888d4e77ac90a0"><span class="std std-ref">Server::config()</span></a> </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config7fromEnvEv">
+<span id="_CPPv3N4pvxs6server6Config7fromEnvEv"></span><span id="_CPPv2N4pvxs6server6Config7fromEnvEv"></span><span id="pvxs::server::Config::fromEnv"></span><span class="target" id="structpvxs_1_1server_1_1Config_1a32883db929c83bfdeb7f1f04d780a52e"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6ConfigE" title="pvxs::server::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fromEnv</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config7fromEnvEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Default configuration using process environment. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Config8isolatedEi">
+<span id="_CPPv3N4pvxs6server6Config8isolatedEi"></span><span id="_CPPv2N4pvxs6server6Config8isolatedEi"></span><span id="pvxs::server::Config::isolated__i"></span><span class="target" id="structpvxs_1_1server_1_1Config_1ac3c201bd106367cb361283df0c19a057"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6ConfigE" title="pvxs::server::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isolated</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">family</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">AF_INET</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Config8isolatedEi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Configuration limited to the local loopback interface on a randomly chosen port. Suitable for use in self-contained unit-tests. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.3.0 Address family argument added. </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6ServerE">
+<span id="_CPPv3N4pvxs6server6ServerE"></span><span id="_CPPv2N4pvxs6server6ServerE"></span><span id="pvxs::server::Server"></span><span class="target" id="classpvxs_1_1server_1_1Server"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Server</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6ServerE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>PV Access protocol server instance</p>
+<p>Use a <a class="reference internal" href="#structpvxs_1_1server_1_1Config"><span class="std std-ref">Config</span></a> to determine how this server will bind, listen, and announce itself.</p>
+<p>In order to be useful, a <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> will have one or more <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> instances added to it with <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1af9ba86f02b33e67489308b230066121f"><span class="std std-ref">addSource()</span></a>.</p>
+<p>As a convenience, each <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> instance automatically contains a “__builtin” <a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1StaticSource"><span class="std std-ref">StaticSource</span></a> to which <a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> instances can be directly added. The “__builtin” has priority zero, and can be accessed or even removed like any <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> explicitly added with <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1af9ba86f02b33e67489308b230066121f"><span class="std std-ref">addSource()</span></a>.</p>
+<p>There is also a “__server” source which provides the special “server” PV used by the pvlist CLI. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server6ServerEv">
+<span id="_CPPv3N4pvxs6server6Server6ServerEv"></span><span id="_CPPv2N4pvxs6server6Server6ServerEv"></span><span id="pvxs::server::Server::ServerCE"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a59d811490034baf13a6c7f51dc595713"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Server</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server6ServerEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An empty/dummy <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server6ServerERK6Config">
+<span id="_CPPv3N4pvxs6server6Server6ServerERK6Config"></span><span id="_CPPv2N4pvxs6server6Server6ServerERK6Config"></span><span id="pvxs::server::Server::Server__ConfigCR"></span><span class="target" id="classpvxs_1_1server_1_1Server_1adb95dd5ec3f61e68eeb37693c0e8c3a9"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Server</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6ConfigE" title="pvxs::server::Config"><span class="n"><span class="pre">Config</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server6ServerERK6Config" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create/allocate, but do not start, a new server with the provided config. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server5startEv">
+<span id="_CPPv3N4pvxs6server6Server5startEv"></span><span id="_CPPv2N4pvxs6server6Server5startEv"></span><span id="pvxs::server::Server::start"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a8c6d11ad423722e2e4a857073183a09f"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">start</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server5startEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Begin serving. Does not block. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server4stopEv">
+<span id="_CPPv3N4pvxs6server6Server4stopEv"></span><span id="_CPPv2N4pvxs6server6Server4stopEv"></span><span id="pvxs::server::Server::stop"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a61be3985d547bd4dce4de72563c5181b"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">stop</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server4stopEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Stop server. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server3runEv">
+<span id="_CPPv3N4pvxs6server6Server3runEv"></span><span id="_CPPv2N4pvxs6server6Server3runEv"></span><span id="pvxs::server::Server::run"></span><span class="target" id="classpvxs_1_1server_1_1Server_1ae988d7809356b2727ba683bbf26effd1"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">run</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server3runEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a8c6d11ad423722e2e4a857073183a09f"><span class="std std-ref">start()</span></a> and then (maybe) <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a61be3985d547bd4dce4de72563c5181b"><span class="std std-ref">stop()</span></a></p>
+<p><a class="reference internal" href="#classpvxs_1_1server_1_1Server_1ae988d7809356b2727ba683bbf26effd1"><span class="std std-ref">run()</span></a> may be interrupted by calling <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a1a17bcb8946443b202846cfe58a3eaf6"><span class="std std-ref">interrupt()</span></a>, or by SIGINT or SIGTERM (only one <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> per process)</p>
+<p>Intended to simple CLI programs. Only one <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a> in a process may be in <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1ae988d7809356b2727ba683bbf26effd1"><span class="std std-ref">run()</span></a> at any moment. Other use case should call <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a8c6d11ad423722e2e4a857073183a09f"><span class="std std-ref">start()</span></a>/stop() </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server9interruptEv">
+<span id="_CPPv3N4pvxs6server6Server9interruptEv"></span><span id="_CPPv2N4pvxs6server6Server9interruptEv"></span><span id="pvxs::server::Server::interrupt"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a1a17bcb8946443b202846cfe58a3eaf6"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">interrupt</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server9interruptEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Queue a request to break <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1ae988d7809356b2727ba683bbf26effd1"><span class="std std-ref">run()</span></a> </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Server6configEv">
+<span id="_CPPv3NK4pvxs6server6Server6configEv"></span><span id="_CPPv2NK4pvxs6server6Server6configEv"></span><span id="pvxs::server::Server::configC"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a9a742201df62c1d3c2888d4e77ac90a0"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6ConfigE" title="pvxs::server::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">config</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Server6configEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>effective config </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server6Server12clientConfigEv">
+<span id="_CPPv3NK4pvxs6server6Server12clientConfigEv"></span><span id="_CPPv2NK4pvxs6server6Server12clientConfigEv"></span><span id="pvxs::server::Server::clientConfigC"></span><span class="target" id="classpvxs_1_1server_1_1Server_1add4b8a6ca8fceff32d1237aa8b16a5be"></span><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="client.html#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">clientConfig</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server6Server12clientConfigEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a client configuration which can communicate with this <a class="reference internal" href="#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a>. Suitable for use in self-contained unit-tests. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server5addPVERKNSt6stringERK8SharedPV">
+<span id="_CPPv3N4pvxs6server6Server5addPVERKNSt6stringERK8SharedPV"></span><span id="_CPPv2N4pvxs6server6Server5addPVERKNSt6stringERK8SharedPV"></span><span id="pvxs::server::Server::addPV__ssCR.SharedPVCR"></span><span class="target" id="classpvxs_1_1server_1_1Server_1add161c340b78727a4c04438ead81a670"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">addPV</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="sharedpv.html#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pv</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server5addPVERKNSt6stringERK8SharedPV" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a <a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> to the “__builtin” <a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1StaticSource"><span class="std std-ref">StaticSource</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server8removePVERKNSt6stringE">
+<span id="_CPPv3N4pvxs6server6Server8removePVERKNSt6stringE"></span><span id="_CPPv2N4pvxs6server6Server8removePVERKNSt6stringE"></span><span id="pvxs::server::Server::removePV__ssCR"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a48f999ec3907cdfddf21dc48a061079b"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">removePV</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server8removePVERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Remove a <a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> from the “__builtin” <a class="reference internal" href="sharedpv.html#structpvxs_1_1server_1_1StaticSource"><span class="std std-ref">StaticSource</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server9addSourceERKNSt6stringERKNSt10shared_ptrI6SourceEEi">
+<span id="_CPPv3N4pvxs6server6Server9addSourceERKNSt6stringERKNSt10shared_ptrI6SourceEEi"></span><span id="_CPPv2N4pvxs6server6Server9addSourceERKNSt6stringERKNSt10shared_ptrI6SourceEEi"></span><span id="pvxs::server::Server::addSource__ssCR.std::shared_ptr:Source:CR.i"></span><span class="target" id="classpvxs_1_1server_1_1Server_1af9ba86f02b33e67489308b230066121f"></span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">addSource</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server6SourceE" title="pvxs::server::Source"><span class="n"><span class="pre">Source</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">src</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">order</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server9addSourceERKNSt6stringERKNSt10shared_ptrI6SourceEEi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> to this server with an arbitrary source name.</p>
+<p><a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> names beginning with “__” are reserved for internal use. eg. “__builtin” and “__server”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> name </p></li>
+<li><p><strong>src</strong> – The <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a>. A strong reference to this <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> which will be released by <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1a80f81e6ec692fe6ae16d3a965b3fe1e5"><span class="std std-ref">removeSource()</span></a> or ~Server() </p></li>
+<li><p><strong>order</strong> – Determines the order in which this <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source_1af32e5b70c2cb0ecc1a2d73cb356bd8fd"><span class="std std-ref">Source::onCreate()</span></a> will be called. Lowest first.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Throws<span class="colon">:</span></dt>
+<dd class="field-even"><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">runtime_error</span></span></span> – If this (name, order) has already been added. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server12removeSourceERKNSt6stringEi">
+<span id="_CPPv3N4pvxs6server6Server12removeSourceERKNSt6stringEi"></span><span id="_CPPv2N4pvxs6server6Server12removeSourceERKNSt6stringEi"></span><span id="pvxs::server::Server::removeSource__ssCR.i"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a80f81e6ec692fe6ae16d3a965b3fe1e5"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server6SourceE" title="pvxs::server::Source"><span class="n"><span class="pre">Source</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">removeSource</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">order</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server12removeSourceERKNSt6stringEi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Disassociate a <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> using the name and priority given to <a class="reference internal" href="#classpvxs_1_1server_1_1Server_1af9ba86f02b33e67489308b230066121f"><span class="std std-ref">addSource()</span></a> </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server9getSourceERKNSt6stringEi">
+<span id="_CPPv3N4pvxs6server6Server9getSourceERKNSt6stringEi"></span><span id="_CPPv2N4pvxs6server6Server9getSourceERKNSt6stringEi"></span><span id="pvxs::server::Server::getSource__ssCR.i"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a4218670a161ece29ecb8b4cfecba5588"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server6SourceE" title="pvxs::server::Source"><span class="n"><span class="pre">Source</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getSource</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">order</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server9getSourceERKNSt6stringEi" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Fetch a previously added <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server10listSourceEv">
+<span id="_CPPv3N4pvxs6server6Server10listSourceEv"></span><span id="_CPPv2N4pvxs6server6Server10listSourceEv"></span><span id="pvxs::server::Server::listSource"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a13e0d4b771af0fd82ad3b8f4c5b98ab1"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">pair</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">listSource</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server10listSourceEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>List all source names and priorities. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server6Server7fromEnvEv">
+<span id="_CPPv3N4pvxs6server6Server7fromEnvEv"></span><span id="_CPPv2N4pvxs6server6Server7fromEnvEv"></span><span id="pvxs::server::Server::fromEnv"></span><span class="target" id="classpvxs_1_1server_1_1Server_1a3a7f1457ee73d159e5a04ed15128e62b"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server6ServerE" title="pvxs::server::Server"><span class="n"><span class="pre">Server</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fromEnv</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server6Server7fromEnvEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create new server based on configuration from $EPICS_PVA* environment variables.</p>
+<p>Shorthand for <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="p">::</span><span class="n">fromEnv</span><span class="p">()</span><span class="o">.</span><span class="n">build</span><span class="p">()</span> 
+</pre></div>
+</div>
+. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.1 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Server API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sharedpv.html">SharedPV and StaticSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source.html">Data Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="client.html" title="previous chapter">Client API</a></li>
+      <li>Next: <a href="sharedpv.html" title="next chapter">SharedPV and StaticSource</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/server.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>SharedPV and StaticSource &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Source" href="source.html" />
+    <link rel="prev" title="Server API" href="server.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="sharedpv-and-staticsource">
+<h1>SharedPV and StaticSource<a class="headerlink" href="#sharedpv-and-staticsource" title="Permalink to this heading">¶</a></h1>
+<p>A SharedPV is a single data value which may be accessed by multiple clients through a Server.
+It is “shared” in the sense that all clients are manipulating a single variable.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;pvxs/sharedpv.h&gt;</span>
+<span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">server</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+</pre></div>
+</div>
+<p>Each SharedPV instance has (after open() ) an associated data structure
+which is later manipulated with post().</p>
+<p>A simple usage is:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="p">;</span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">initial</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Float64</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+<span class="n">initial</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">42.0</span><span class="p">;</span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">src</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">StaticSource</span><span class="o">::</span><span class="n">build</span><span class="p">());</span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">pv</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">::</span><span class="n">buildMailbox</span><span class="p">());</span>
+<span class="n">pv</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">initial</span><span class="p">);</span>
+
+<span class="n">src</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">pv</span><span class="p">);</span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">serv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">server</span><span class="o">::</span><span class="n">Server</span><span class="o">::</span><span class="n">Config</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">build</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="n">addSource</span><span class="p">(</span><span class="s">&quot;box&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">src</span><span class="p">.</span><span class="n">source</span><span class="p">());</span>
+
+<span class="n">serv</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>In this context “mailbox” refers to the default onPut() handler, which simply post()s whatever
+the client sends.</p>
+<p>An example of a SharedPV with a custom Put handler</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">auto</span><span class="w"> </span><span class="n">pv</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">::</span><span class="n">buildMailbox</span><span class="p">());</span>
+
+<span class="n">pv</span><span class="p">.</span><span class="n">opPut</span><span class="p">([](</span><span class="n">server</span><span class="o">::</span><span class="n">SharedPV</span><span class="o">&amp;</span><span class="w"> </span><span class="n">pv</span><span class="p">,</span>
+<span class="w">            </span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">server</span><span class="o">::</span><span class="n">ExecOp</span><span class="o">&gt;&amp;&amp;</span><span class="w"> </span><span class="n">op</span><span class="p">,</span>
+<span class="w">            </span><span class="n">Value</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">top</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">// We decide that .value will be present with .open()</span>
+<span class="w">    </span><span class="k">auto</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">];</span>
+<span class="w">    </span><span class="c1">// is client trying to change .value ?</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">val</span><span class="p">.</span><span class="n">isMarked</span><span class="p">(</span><span class="nb">true</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">auto</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// clip to range [0, 10]</span>
+<span class="w">        </span><span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">val</span><span class="p">,</span><span class="w"> </span><span class="mf">10.0</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// update and send to subscribers</span>
+<span class="w">    </span><span class="n">pv</span><span class="p">.</span><span class="n">post</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">top</span><span class="p">));</span>
+<span class="w">    </span><span class="c1">// notify client of success  (or call op-&gt;error() if not)</span>
+<span class="w">    </span><span class="n">op</span><span class="o">-&gt;</span><span class="n">reply</span><span class="p">();</span>
+<span class="p">});</span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">initial</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Float64</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+<span class="n">initial</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">42.0</span><span class="p">;</span>
+
+<span class="k">auto</span><span class="w"> </span><span class="n">src</span><span class="p">(</span><span class="n">server</span><span class="o">::</span><span class="n">StaticSource</span><span class="o">::</span><span class="n">build</span><span class="p">());</span>
+
+<span class="n">pv</span><span class="p">.</span><span class="n">open</span><span class="p">(</span><span class="n">initial</span><span class="p">);</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SharedPV follows the Source rules for <a class="reference internal" href="source.html#sourcethreading"><span class="std std-ref">Threading</span></a> and locking.</p>
+</div>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPVE">
+<span id="_CPPv3N4pvxs6server8SharedPVE"></span><span id="_CPPv2N4pvxs6server8SharedPVE"></span><span id="pvxs::server::SharedPV"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">SharedPV</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPVE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> is a single data value which may be accessed by multiple clients through a <a class="reference internal" href="server.html#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a>.</p>
+<p>On creation a <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> has no associated data structure, or data type. This is set by calling <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af3726d1a96a756bac037b4fd8a26aada"><span class="std std-ref">open()</span></a> to provide a data type, and initial data values. Subsequent calls to <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1ac4400ba62093bc020b2d63a6cb6b8026"><span class="std std-ref">post()</span></a> will update this data structure (and send notifications to subscribing clients).</p>
+<p>A later call to <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af6fabc98c85267e055097cb7f9a903a0"><span class="std std-ref">close()</span></a> will force disconnect all clients, and discard the data value and type. A further call to <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af3726d1a96a756bac037b4fd8a26aada"><span class="std std-ref">open()</span></a> sets a new data value, which may be of a different data type.</p>
+<p>The <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1a225e99e6816872fdd9d73d4582607bbd"><span class="std std-ref">onPut()</span></a> and <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1aa5e869240f58b7e18739d8a52e763fff"><span class="std std-ref">onRPC()</span></a> methods attach functors which will be called each time a Put or RPC operation is executed by a client. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV6attachERRNSt10unique_ptrI14ChannelControlEE">
+<span id="_CPPv3N4pvxs6server8SharedPV6attachERRNSt10unique_ptrI14ChannelControlEE"></span><span id="_CPPv2N4pvxs6server8SharedPV6attachERRNSt10unique_ptrI14ChannelControlEE"></span><span id="pvxs::server::SharedPV::attach__std::unique_ptr:ChannelControl:RR"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1af14d1a9f963c40a75cc6241d35f0fe33"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">attach</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server14ChannelControlE" title="pvxs::server::ChannelControl"><span class="n"><span class="pre">ChannelControl</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">op</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV6attachERRNSt10unique_ptrI14ChannelControlEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attach this <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> with a new client channel. Not necessary when using <a class="reference internal" href="#structpvxs_1_1server_1_1StaticSource"><span class="std std-ref">StaticSource</span></a>. eg. could call from <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source_1af32e5b70c2cb0ecc1a2d73cb356bd8fd"><span class="std std-ref">Source::onCreate()</span></a> </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV14onFirstConnectERRNSt8functionIFvR8SharedPVEEE">
+<span id="_CPPv3N4pvxs6server8SharedPV14onFirstConnectERRNSt8functionIFvR8SharedPVEEE"></span><span id="_CPPv2N4pvxs6server8SharedPV14onFirstConnectERRNSt8functionIFvR8SharedPVEEE"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a7685e66421771e6993ba5a3af2273f71"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onFirstConnect</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV14onFirstConnectERRNSt8functionIFvR8SharedPVEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when the number of <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af14d1a9f963c40a75cc6241d35f0fe33"><span class="std std-ref">attach()</span></a>d clients becomes non-zero. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV16onLastDisconnectERRNSt8functionIFvR8SharedPVEEE">
+<span id="_CPPv3N4pvxs6server8SharedPV16onLastDisconnectERRNSt8functionIFvR8SharedPVEEE"></span><span id="_CPPv2N4pvxs6server8SharedPV16onLastDisconnectERRNSt8functionIFvR8SharedPVEEE"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1ae8b88801f1f4896e49f5aa406a6ad8ca"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onLastDisconnect</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV16onLastDisconnectERRNSt8functionIFvR8SharedPVEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when the number of <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af14d1a9f963c40a75cc6241d35f0fe33"><span class="std std-ref">attach()</span></a>d clients becomes zero. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV5onPutERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE">
+<span id="_CPPv3N4pvxs6server8SharedPV5onPutERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span id="_CPPv2N4pvxs6server8SharedPV5onPutERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a225e99e6816872fdd9d73d4582607bbd"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onPut</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server6ExecOpE" title="pvxs::server::ExecOp"><span class="n"><span class="pre">ExecOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV5onPutERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when a client executes a new Put operation. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV5onRPCERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE">
+<span id="_CPPv3N4pvxs6server8SharedPV5onRPCERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span id="_CPPv2N4pvxs6server8SharedPV5onRPCERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1aa5e869240f58b7e18739d8a52e763fff"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">onRPC</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">unique_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server6ExecOpE" title="pvxs::server::ExecOp"><span class="n"><span class="pre">ExecOp</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV5onRPCERRNSt8functionIFvR8SharedPVRRNSt10unique_ptrI6ExecOpEERR5ValueEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback when a client executes an RPC operation. </p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>RPC operations are allowed even when the <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> is not opened (<a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1a9dfda83dd5569d978dc250a41ce64d5b"><span class="std std-ref">isOpen()</span></a>==false) </p>
+</div>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV4openERK5Value">
+<span id="_CPPv3N4pvxs6server8SharedPV4openERK5Value"></span><span id="_CPPv2N4pvxs6server8SharedPV4openERK5Value"></span><span id="pvxs::server::SharedPV::open__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1af3726d1a96a756bac037b4fd8a26aada"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">open</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">initial</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV4openERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provide data type and initial value. Allows clients to begin connecting. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>initial</strong> – Defines data type, and initial value </p>
+</dd>
+<dt class="field-even">Pre<span class="colon">:</span></dt>
+<dd class="field-even"><p>!isOpen() </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server8SharedPV6isOpenEv">
+<span id="_CPPv3NK4pvxs6server8SharedPV6isOpenEv"></span><span id="_CPPv2NK4pvxs6server8SharedPV6isOpenEv"></span><span id="pvxs::server::SharedPV::isOpenC"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a9dfda83dd5569d978dc250a41ce64d5b"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isOpen</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server8SharedPV6isOpenEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Test whether <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af3726d1a96a756bac037b4fd8a26aada"><span class="std std-ref">open()</span></a> has been called w/o matching <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af6fabc98c85267e055097cb7f9a903a0"><span class="std std-ref">close()</span></a> </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV5closeEv">
+<span id="_CPPv3N4pvxs6server8SharedPV5closeEv"></span><span id="_CPPv2N4pvxs6server8SharedPV5closeEv"></span><span id="pvxs::server::SharedPV::close"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1af6fabc98c85267e055097cb7f9a903a0"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">close</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV5closeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Reverse the effects of <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af3726d1a96a756bac037b4fd8a26aada"><span class="std std-ref">open()</span></a> and force disconnect any remaining clients. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV4postERK5Value">
+<span id="_CPPv3N4pvxs6server8SharedPV4postERK5Value"></span><span id="_CPPv2N4pvxs6server8SharedPV4postERK5Value"></span><span id="pvxs::server::SharedPV::post__ValueCR"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1ac4400ba62093bc020b2d63a6cb6b8026"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">post</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV4postERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Update the internal data value, and dispatch subscription updates to any clients. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server8SharedPV5fetchER5Value">
+<span id="_CPPv3NK4pvxs6server8SharedPV5fetchER5Value"></span><span id="_CPPv2NK4pvxs6server8SharedPV5fetchER5Value"></span><span id="pvxs::server::SharedPV::fetch__ValueRC"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a3180881552abd16bd90c3df3978a6f95"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fetch</span></span></span><span class="sig-paren">(</span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server8SharedPV5fetchER5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>query the internal data value and update the provided <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server8SharedPV5fetchEv">
+<span id="_CPPv3NK4pvxs6server8SharedPV5fetchEv"></span><span id="_CPPv2NK4pvxs6server8SharedPV5fetchEv"></span><span id="pvxs::server::SharedPV::fetchC"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a5f4d2f83076a41b5cf6b4def35b3954c"></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fetch</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server8SharedPV5fetchEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return a (shallow) copy of the internal data value. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV12buildMailboxEv">
+<span id="_CPPv3N4pvxs6server8SharedPV12buildMailboxEv"></span><span id="_CPPv2N4pvxs6server8SharedPV12buildMailboxEv"></span><span id="pvxs::server::SharedPV::buildMailbox"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a5942ec97e39d72a6c899c912ccb11738"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">buildMailbox</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV12buildMailboxEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a new <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> with a Put handler which <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1ac4400ba62093bc020b2d63a6cb6b8026"><span class="std std-ref">post()</span></a> s any client provided <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server8SharedPV13buildReadonlyEv">
+<span id="_CPPv3N4pvxs6server8SharedPV13buildReadonlyEv"></span><span id="_CPPv2N4pvxs6server8SharedPV13buildReadonlyEv"></span><span id="pvxs::server::SharedPV::buildReadonly"></span><span class="target" id="structpvxs_1_1server_1_1SharedPV_1a7a8dbeeafb53607c6ebebdd93ab539ce"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">buildReadonly</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server8SharedPV13buildReadonlyEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a new <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> with a Put handler which rejects any client provided <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server12StaticSourceE">
+<span id="_CPPv3N4pvxs6server12StaticSourceE"></span><span id="_CPPv2N4pvxs6server12StaticSourceE"></span><span id="pvxs::server::StaticSource"></span><span class="target" id="structpvxs_1_1server_1_1StaticSource"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">StaticSource</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6server12StaticSourceE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Allow clients to find (through a <a class="reference internal" href="server.html#classpvxs_1_1server_1_1Server"><span class="std std-ref">Server</span></a>) <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> instances by name.</p>
+<p>A single PV name may only be added once to a <a class="reference internal" href="#structpvxs_1_1server_1_1StaticSource"><span class="std std-ref">StaticSource</span></a>. However, a single <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> may be added multiple times with different PV names. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6server12StaticSource6sourceEv">
+<span id="_CPPv3NK4pvxs6server12StaticSource6sourceEv"></span><span id="_CPPv2NK4pvxs6server12StaticSource6sourceEv"></span><span id="pvxs::server::StaticSource::sourceC"></span><span class="target" id="structpvxs_1_1server_1_1StaticSource_1a6e790fa0b985f6064aa4060c11fb12b2"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="source.html#_CPPv4N4pvxs6server6SourceE" title="pvxs::server::Source"><span class="n"><span class="pre">Source</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">source</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6server12StaticSource6sourceEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Fetch the <a class="reference internal" href="source.html#structpvxs_1_1server_1_1Source"><span class="std std-ref">Source</span></a> interface, which may be used with <a class="reference internal" href="server.html#classpvxs_1_1server_1_1Server_1af9ba86f02b33e67489308b230066121f"><span class="std std-ref">Server::addSource()</span></a> </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server12StaticSource5closeEv">
+<span id="_CPPv3N4pvxs6server12StaticSource5closeEv"></span><span id="_CPPv2N4pvxs6server12StaticSource5closeEv"></span><span id="pvxs::server::StaticSource::close"></span><span class="target" id="structpvxs_1_1server_1_1StaticSource_1adb78eaf632c2b4dd0be9caff6650c272"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">close</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server12StaticSource5closeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>call <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV_1af6fabc98c85267e055097cb7f9a903a0"><span class="std std-ref">SharedPV::close()</span></a> on all PVs </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server12StaticSource3addERKNSt6stringERK8SharedPV">
+<span id="_CPPv3N4pvxs6server12StaticSource3addERKNSt6stringERK8SharedPV"></span><span id="_CPPv2N4pvxs6server12StaticSource3addERKNSt6stringERK8SharedPV"></span><span id="pvxs::server::StaticSource::add__ssCR.SharedPVCR"></span><span class="target" id="structpvxs_1_1server_1_1StaticSource_1aa50032ca1d76b73bdf14982701e3bed4"></span><a class="reference internal" href="#_CPPv4N4pvxs6server12StaticSourceE" title="pvxs::server::StaticSource"><span class="n"><span class="pre">StaticSource</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">add</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6server8SharedPVE" title="pvxs::server::SharedPV"><span class="n"><span class="pre">SharedPV</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pv</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server12StaticSource3addERKNSt6stringERK8SharedPV" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a new name through which a <a class="reference internal" href="#structpvxs_1_1server_1_1SharedPV"><span class="std std-ref">SharedPV</span></a> may be addressed. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6server12StaticSource6removeERKNSt6stringE">
+<span id="_CPPv3N4pvxs6server12StaticSource6removeERKNSt6stringE"></span><span id="_CPPv2N4pvxs6server12StaticSource6removeERKNSt6stringE"></span><span id="pvxs::server::StaticSource::remove__ssCR"></span><span class="target" id="structpvxs_1_1server_1_1StaticSource_1aef55242e37fc53ad9740ef127b143970"></span><a class="reference internal" href="#_CPPv4N4pvxs6server12StaticSourceE" title="pvxs::server::StaticSource"><span class="n"><span class="pre">StaticSource</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">remove</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6server12StaticSource6removeERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Remove a single name. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="server.html">Server API</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">SharedPV and StaticSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="source.html">Data Source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="server.html#configuration">Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="server.html">Server API</a><ul>
+      <li>Previous: <a href="server.html" title="previous chapter">Server API</a></li>
+      <li>Next: <a href="source.html" title="next chapter">Data Source</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/sharedpv.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

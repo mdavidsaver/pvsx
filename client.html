@@ -1,0 +1,1273 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Client API &#8212; PVXS 1.3.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="shortcut icon" href="_static/favicon.png"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Server API" href="server.html" />
+    <link rel="prev" title="Defining Custom Types" href="typedef.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="client-api">
+<span id="clientapi"></span><h1>Client API<a class="headerlink" href="#client-api" title="Permalink to this heading">¶</a></h1>
+<p><a class="reference internal" href="#_CPPv4N4pvxs6client7ContextE" title="pvxs::client::Context"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context</span></code></a> represents a PVA protocol client.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/client.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="n">namespace</span> <span class="n">client</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span> <span class="p">}</span>
+</pre></div>
+</div>
+<section id="configuration">
+<span id="clientconf"></span><h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading">¶</a></h2>
+<p>The recommended starting point is creating new context configured from <code class="docutils literal notranslate"><span class="pre">EPICS_PVA_*</span></code> <a class="reference internal" href="netconfig.html#environ"><span class="std std-ref">Environment variables</span></a>.
+Use <a class="reference internal" href="#_CPPv4N4pvxs6client7Context7fromEnvEv" title="pvxs::client::Context::fromEnv"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::fromEnv()</span></code></a>.</p>
+<dl class="simple">
+<dt>EPICS_PVA_ADDR_LIST</dt><dd><p>A list of destination addresses to which UDP search messages will be sent.
+May contain unicast and/or broadcast addresses.</p>
+</dd>
+<dt>EPICS_PVA_AUTO_ADDR_LIST</dt><dd><p>If “YES” then all local broadcast addresses will be implicitly appended to $EPICS_PVA_ADDR_LIST.
+“YES” if unset.</p>
+</dd>
+<dt>EPICS_PVA_NAME_SERVERS</dt><dd><p>A list of the addresses of listening TCP sockets to which search messages will be sent.</p>
+</dd>
+<dt>EPICS_PVA_BROADCAST_PORT</dt><dd><p>Default UDP port to which UDP searches will be sent.  5076 if unset.</p>
+</dd>
+<dt>EPICS_PVA_CONN_TMO</dt><dd><p>Inactivity timeout for TCP connections.  For compatibility with pvAccessCPP
+a multiplier of 4/3 is applied.  So a value of 30 results in a 40 second timeout.
+Prior to 0.2.0 this variable was ignored.</p>
+</dd>
+</dl>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.3.0: </span><strong>EPICS_PVA_ADDR_LIST</strong> may contain IPv4 multicast, and IPv6 uni/multicast addresses.</p>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.2.0: </span>Added <strong>EPICS_PVA_NAME_SERVERS</strong>.</p>
+</div>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.2.0: </span>Prior to 0.2.0 <em>EPICS_PVA_CONN_TMO</em> was ignored.</p>
+</div>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">pvxs</span><span class="p">;</span>
+<span class="c1">// Context configured from process environment</span>
+<span class="n">client</span><span class="o">::</span><span class="n">Context</span><span class="w"> </span><span class="n">ctxt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="o">::</span><span class="n">Context</span><span class="o">::</span><span class="n">fromEnv</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>Programmatic configuration can be accomplished by explicitly filling in a <a class="reference internal" href="#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Config</span></code></a>.</p>
+</section>
+<section id="making-requests">
+<h2>Making Requests<a class="headerlink" href="#making-requests" title="Permalink to this heading">¶</a></h2>
+<p>A <a class="reference internal" href="#_CPPv4N4pvxs6client7ContextE" title="pvxs::client::Context"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context</span></code></a> instance is the entry point for all client network operations.
+Begin by calling one of the info(), get(), put(), rpc(), or monitor() methods.
+Each of these methods returns a *Builder object which can
+be used to provide additional configuration in what are in
+effected named arguments.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7ContextE">
+<span id="_CPPv3N4pvxs6client7ContextE"></span><span id="_CPPv2N4pvxs6client7ContextE"></span><span id="pvxs::client::Context"></span><span class="target" id="classpvxs_1_1client_1_1Context"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Context</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client7ContextE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An independent PVA protocol client instance</p>
+<p>Typically created with <a class="reference internal" href="#structpvxs_1_1client_1_1Config_1ae5d9aada76b2b742b0e35270d3a4601d"><span class="std std-ref">Config::build()</span></a></p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="n">Config</span><span class="p">::</span><span class="n">from_env</span><span class="p">()</span><span class="o">.</span><span class="n">build</span><span class="p">());</span>
+</pre></div>
+</div>
+ </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7ContextEv">
+<span id="_CPPv3N4pvxs6client7Context7ContextEv"></span><span id="_CPPv2N4pvxs6client7Context7ContextEv"></span><span id="pvxs::client::Context::ContextCE"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a7d7195b8a850a6e4c7df4576bc29f4d1"></span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Context</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">default</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7ContextEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An empty/dummy <a class="reference internal" href="#classpvxs_1_1client_1_1Context"><span class="std std-ref">Context</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7ContextERK6Config">
+<span id="_CPPv3N4pvxs6client7Context7ContextERK6Config"></span><span id="_CPPv2N4pvxs6client7Context7ContextERK6Config"></span><span id="pvxs::client::Context::Context__ConfigCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a8e3ade70ae33bc4da1b3227aa7f44050"></span><span class="k"><span class="pre">explicit</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Context</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><span class="n"><span class="pre">Config</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7ContextERK6Config" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create/allocate a new client with the provided config. <a class="reference internal" href="#structpvxs_1_1client_1_1Config_1ae5d9aada76b2b742b0e35270d3a4601d"><span class="std std-ref">Config::build()</span></a> is a convenient shorthand. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6client7Context6configEv">
+<span id="_CPPv3NK4pvxs6client7Context6configEv"></span><span id="_CPPv2NK4pvxs6client7Context6configEv"></span><span id="pvxs::client::Context::configC"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a39ff04b62f1ee32bd3abfa577e1fab22"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">config</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6client7Context6configEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>effective config of running client </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context5closeEv">
+<span id="_CPPv3N4pvxs6client7Context5closeEv"></span><span id="_CPPv2N4pvxs6client7Context5closeEv"></span><span id="pvxs::client::Context::close"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a5f3641e0648108b220c8252e7f266f58"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">close</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context5closeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Force close the client.</p>
+<p>~Context() will <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1a5f3641e0648108b220c8252e7f266f58"><span class="std std-ref">close()</span></a> automatically. So an explicit call is optional.</p>
+<p>Aborts/interrupts all in progress network operations. Blocks until any in-progress callbacks have completed.</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.1.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context3getERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client7Context3getERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client7Context3getERKNSt6stringE"></span><span id="pvxs::client::Context::get__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a6e415ebddca023f2446548c4e7c0b9ad"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10GetBuilderE" title="pvxs::client::GetBuilder"><span class="n"><span class="pre">GetBuilder</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">get</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pvname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context3getERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Request the present value of a PV</p>
+<p>Simple blocking</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">exec</span><span class="p">()</span>
+                  <span class="o">-&gt;</span><span class="n">wait</span><span class="p">();</span>
+</pre></div>
+</div>
+</p>
+<p>With completion callback</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">op</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">result</span><span class="p">([](</span><span class="n">Result</span><span class="o">&amp;&amp;</span> <span class="n">prototype</span><span class="p">){</span>
+                 <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">prototype</span><span class="p">();</span>
+              <span class="p">})</span>
+              <span class="o">.</span><span class="n">exec</span><span class="p">();</span>
+<span class="o">//</span> <span class="n">store</span> <span class="n">op</span> <span class="n">until</span> <span class="n">completion</span>
+</pre></div>
+</div>
+ See <a class="reference internal" href="#classpvxs_1_1client_1_1GetBuilder"><span class="std std-ref">GetBuilder</span></a> and <a class="reference external" href="#get-info">Get/Info</a> for details. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context4infoERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client7Context4infoERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client7Context4infoERKNSt6stringE"></span><span id="pvxs::client::Context::info__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a431ea9dedbea91f17d2681603bad27bb"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10GetBuilderE" title="pvxs::client::GetBuilder"><span class="n"><span class="pre">GetBuilder</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">info</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pvname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context4infoERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Request type information from PV. Results in a <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> with no marked fields.</p>
+<p>Simple blocking</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">exec</span><span class="p">()</span>
+                  <span class="o">-&gt;</span><span class="n">wait</span><span class="p">();</span>
+</pre></div>
+</div>
+</p>
+<p>With completion callback</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">op</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">result</span><span class="p">([](</span><span class="n">Result</span><span class="o">&amp;&amp;</span> <span class="n">prototype</span><span class="p">){</span>
+                 <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">prototype</span><span class="p">();</span>
+              <span class="p">})</span>
+              <span class="o">.</span><span class="n">exec</span><span class="p">();</span>
+<span class="o">//</span> <span class="n">store</span> <span class="n">op</span> <span class="n">until</span> <span class="n">completion</span>
+</pre></div>
+</div>
+</p>
+<p>See <a class="reference internal" href="#classpvxs_1_1client_1_1GetBuilder"><span class="std std-ref">GetBuilder</span></a> and <a class="reference external" href="#get-info">Get/Info</a> for details. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context3putERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client7Context3putERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client7Context3putERKNSt6stringE"></span><span id="pvxs::client::Context::put__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1afa18a2ac9739511adbe181be93695c42"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><span class="n"><span class="pre">PutBuilder</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">put</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pvname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context3putERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Request change/update of PV.</p>
+<p>Assign certain values to certain fields and block for completion.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="mi">42</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">exec</span><span class="p">()</span>
+                  <span class="o">-&gt;</span><span class="n">wait</span><span class="p">();</span>
+</pre></div>
+</div>
+</p>
+<p>Alternately, and more generally, using a .build() callback and use .result() callback for completion notification.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">op</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">build</span><span class="p">([](</span><span class="n">Value</span><span class="o">&amp;&amp;</span> <span class="n">prototype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Value</span> <span class="p">{</span>
+                  <span class="n">auto</span> <span class="n">putval</span> <span class="o">=</span> <span class="n">prototype</span><span class="o">.</span><span class="n">cloneEmpty</span><span class="p">();</span>
+                  <span class="n">putval</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
+                  <span class="k">return</span> <span class="n">putval</span><span class="p">;</span>
+              <span class="p">})</span>
+              <span class="o">.</span><span class="n">result</span><span class="p">([](</span><span class="n">Result</span><span class="o">&amp;&amp;</span> <span class="n">prototype</span><span class="p">){</span>
+                 <span class="k">try</span> <span class="p">{</span>
+                     <span class="o">//</span> <span class="n">always</span> <span class="n">returns</span> <span class="n">empty</span> <span class="n">Value</span> <span class="n">on</span> <span class="n">success</span>
+                     <span class="n">prototype</span><span class="p">();</span>
+                     <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s2">&quot;Success&quot;</span><span class="p">;</span>
+                 <span class="p">}</span><span class="n">catch</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">exception</span><span class="o">&amp;</span> <span class="n">e</span><span class="p">){</span>
+                     <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="s2">&quot;Error: &quot;</span><span class="o">&lt;&lt;</span><span class="n">e</span><span class="o">.</span><span class="n">what</span><span class="p">();</span>
+                 <span class="p">}</span>
+              <span class="p">})</span>
+              <span class="o">.</span><span class="n">exec</span><span class="p">();</span>
+<span class="o">//</span> <span class="n">store</span> <span class="n">op</span> <span class="n">until</span> <span class="n">completion</span>
+</pre></div>
+</div>
+</p>
+<p>See <a class="reference internal" href="#classpvxs_1_1client_1_1PutBuilder"><span class="std std-ref">PutBuilder</span></a> and <a class="reference external" href="#put">Put</a> for details. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context3rpcERKNSt6stringERK5Value">
+<span id="_CPPv3N4pvxs6client7Context3rpcERKNSt6stringERK5Value"></span><span id="_CPPv2N4pvxs6client7Context3rpcERKNSt6stringERK5Value"></span><span id="pvxs::client::Context::rpc__ssCR.ValueCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a94b19c3982512b88e1d05dd1deb5aab6"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10RPCBuilderE" title="pvxs::client::RPCBuilder"><span class="n"><span class="pre">RPCBuilder</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">rpc</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pvname</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">arg</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context3rpcERKNSt6stringERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Execute “stateless” remote procedure call operation.</p>
+<p>Simple blocking</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">arg</span> <span class="o">=</span> <span class="o">...</span><span class="p">;</span>
+<span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">result</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">rpc</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">arg</span><span class="p">(</span><span class="s2">&quot;blah&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">arg</span><span class="p">(</span><span class="s2">&quot;other&quot;</span><span class="p">,</span> <span class="s2">&quot;example&quot;</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">exec</span><span class="p">()</span>
+                  <span class="o">-&gt;</span><span class="n">wait</span><span class="p">();</span>
+</pre></div>
+</div>
+</p>
+<p>With completion callback</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">arg</span> <span class="o">=</span> <span class="o">...</span><span class="p">;</span>
+<span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">op</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">rpc</span><span class="p">(</span><span class="s2">&quot;pv:name&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+              <span class="o">.</span><span class="n">result</span><span class="p">([](</span><span class="n">Result</span><span class="o">&amp;&amp;</span> <span class="n">prototype</span><span class="p">){</span>
+                 <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">prototype</span><span class="p">();</span>
+              <span class="p">})</span>
+              <span class="o">.</span><span class="n">exec</span><span class="p">();</span>
+<span class="o">//</span> <span class="n">store</span> <span class="n">op</span> <span class="n">until</span> <span class="n">completion</span>
+</pre></div>
+</div>
+</p>
+<p>See <a class="reference internal" href="#classpvxs_1_1client_1_1RPCBuilder"><span class="std std-ref">RPCBuilder</span></a> and <a class="reference external" href="#rpc">RPC</a> for details. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7monitorERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client7Context7monitorERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client7Context7monitorERKNSt6stringE"></span><span id="pvxs::client::Context::monitor__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1aa008ec0492bdb5f87abbf39c929b4da1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="pvxs::client::MonitorBuilder"><span class="n"><span class="pre">MonitorBuilder</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">monitor</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pvname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7monitorERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a new subscription for changes to a PV.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>MPMCFIFO&lt;std::shared_ptr&lt;Subscription&gt;&gt; workqueue(42u);
+
+auto sub = ctxt.monitor(&quot;pv:name&quot;)
+               .event([&amp;workqueue](Subscription&amp; sub) {
+                   // Subscription queue becomes not empty.
+                   // Avoid I/O on PVXS worker thread,
+                   // delegate to application thread
+                   workqueue.push(sub.shared_from_this());
+               })
+               .exec();
+
+while(auto sub = workqueue.pop()) { // could workqueue.push(nullptr) to break
+    try {
+        Value update = sub.pop();
+        if(!update)
+            continue; // Subscription queue empty, wait for another event callback
+        std::cout&lt;&lt;update&lt;&lt;&quot;\n&quot;;
+    } catch(std::exception&amp; e) {
+        // may be Connected(), Disconnect(), Finished(), or RemoteError()
+        std::cerr&lt;&lt;&quot;Error &quot;&lt;&lt;e.what()&lt;&lt;&quot;\n&quot;;
+    }
+    // queue not empty, reschedule
+    workqueue.push(sub);
+}
+// store op until completion
+</pre></div>
+</div>
+</p>
+<p>See <a class="reference internal" href="#classpvxs_1_1client_1_1MonitorBuilder"><span class="std std-ref">MonitorBuilder</span></a> and <a class="reference external" href="#monitor">Monitor</a> for details. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7connectERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client7Context7connectERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client7Context7connectERKNSt6stringE"></span><span id="pvxs::client::Context::connect__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1Context_1ae9aa120fa5a6f813653cb57b4914e14e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14ConnectBuilderE" title="pvxs::client::ConnectBuilder"><span class="n"><span class="pre">ConnectBuilder</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">connect</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">pvname</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7connectERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Manually add, and maintain, an entry in the Channel cache.</p>
+<p>This optional method may be used when it is known that a given PV will be needed in future. <a class="reference internal" href="#classpvxs_1_1client_1_1ConnectBuilder_1a8b177f7865ff923cbf0f5fb20530324b"><span class="std std-ref">ConnectBuilder::onConnect()</span></a> and <a class="reference internal" href="#classpvxs_1_1client_1_1ConnectBuilder_1a294eca6e8b43638f52a485c9dc2f4551"><span class="std std-ref">ConnectBuilder::onDisconnect()</span></a> may be used to get asynchronous notification, or the returned <a class="reference internal" href="#structpvxs_1_1client_1_1Connect"><span class="std std-ref">Connect</span></a> object may be used to poll Channel (dis)connect state.</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context8discoverERRNSt8functionIFvRK10DiscoveredEEE">
+<span id="_CPPv3N4pvxs6client7Context8discoverERRNSt8functionIFvRK10DiscoveredEEE"></span><span id="_CPPv2N4pvxs6client7Context8discoverERRNSt8functionIFvRK10DiscoveredEEE"></span><span class="target" id="classpvxs_1_1client_1_1Context_1abe6eb7608a3a2142f0799fafd188dd0e"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">DiscoverBuilder</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">discover</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">Discovered</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fn</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context8discoverERRNSt8functionIFvRK10DiscoveredEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Discover the presence or absence of Servers.</p>
+<p>Combines information from periodic Server Beacon messages, and optionally Discover pings, to provide notice when PVA servers appear or disappear from attached networks.</p>
+<p>Note that a <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1abe6eb7608a3a2142f0799fafd188dd0e"><span class="std std-ref">discover()</span></a> <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> will never complete with a <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>, and so can only end with a timeout or cancellation.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="n">auto</span> <span class="n">op</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">discover</span><span class="p">([](</span><span class="n">const</span> <span class="n">Discovered</span><span class="o">&amp;</span> <span class="n">evt</span><span class="p">)</span> <span class="p">{</span>
+                 <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">evt</span><span class="o">&lt;&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">endl</span><span class="p">;</span>
+             <span class="p">})</span>
+             <span class="o">.</span><span class="n">pingAll</span><span class="p">(</span><span class="n">false</span><span class="p">)</span> <span class="o">//</span> <span class="n">implied</span> <span class="n">default</span>
+             <span class="o">.</span><span class="n">exec</span><span class="p">();</span>
+<span class="n">op</span><span class="o">-&gt;</span><span class="n">wait</span><span class="p">(</span><span class="mf">10.0</span><span class="p">);</span> <span class="o">//</span> <span class="n">wait</span> <span class="mi">10</span> <span class="n">seconds</span><span class="p">,</span> <span class="n">will</span> <span class="n">always</span> <span class="n">timeout</span><span class="o">.</span>
+</pre></div>
+</div>
+</p>
+<p><dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.3.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7hurryUpEv">
+<span id="_CPPv3N4pvxs6client7Context7hurryUpEv"></span><span id="_CPPv2N4pvxs6client7Context7hurryUpEv"></span><span id="pvxs::client::Context::hurryUp"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a8c18f38816ade70f09951aa2d511a6cb"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">hurryUp</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7hurryUpEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Request prompt search of any disconnected channels.</p>
+<p>This method is recommended for use when executing a batch of operations.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Context</span> <span class="n">ctxt</span> <span class="o">=</span> <span class="o">...</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="p">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">pvnames</span> <span class="o">=</span> <span class="o">...</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">Operation</span><span class="o">&gt;</span> <span class="n">ops</span><span class="p">(</span><span class="n">pvnames</span><span class="o">.</span><span class="n">size</span><span class="p">());</span>
+
+<span class="o">//</span> <span class="n">Initiate</span> <span class="nb">all</span> <span class="n">operations</span>
+<span class="k">for</span><span class="p">(</span><span class="n">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">pvname</span><span class="o">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="n">ops</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">ctxt</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pvnames</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">exec</span><span class="p">();</span>
+
+<span class="n">ctxt</span><span class="o">.</span><span class="n">hurryUp</span><span class="p">();</span> <span class="o">//</span> <span class="n">indicate</span> <span class="n">end</span> <span class="n">of</span> <span class="n">batch</span>
+
+<span class="k">for</span><span class="p">(</span><span class="n">size_t</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">pvname</span><span class="o">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="o">...</span> <span class="o">=</span> <span class="n">ops</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">wait</span><span class="p">();</span> <span class="o">//</span> <span class="n">wait</span> <span class="k">for</span> <span class="n">results</span>
+</pre></div>
+</div>
+</p>
+<p>Optional. Equivalent to detection of a new server. This method has no effect if called more often than once per 30 seconds. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7fromEnvEv">
+<span id="_CPPv3N4pvxs6client7Context7fromEnvEv"></span><span id="_CPPv2N4pvxs6client7Context7fromEnvEv"></span><span id="pvxs::client::Context::fromEnv"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a48c46e22252c27f3747dfe672481d859"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client7ContextE" title="pvxs::client::Context"><span class="n"><span class="pre">Context</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fromEnv</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7fromEnvEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create new client context based on configuration from $EPICS_PVA* environment variables.</p>
+<p>Shorthand for <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Config</span><span class="p">::</span><span class="n">fromEnv</span><span class="p">()</span><span class="o">.</span><span class="n">build</span><span class="p">()</span> 
+</pre></div>
+</div>
+. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.1 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7Context7requestEv">
+<span id="_CPPv3N4pvxs6client7Context7requestEv"></span><span id="_CPPv2N4pvxs6client7Context7requestEv"></span><span id="pvxs::client::Context::request"></span><span class="target" id="classpvxs_1_1client_1_1Context_1a7e2c9f28d7b0e9b816732a347a0a492a"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">RequestBuilder</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">request</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client7Context7requestEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compose a pvRequest independently of a network operation.</p>
+<p>This is not a network operation.</p>
+<p>Use of <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1a7e2c9f28d7b0e9b816732a347a0a492a"><span class="std std-ref">request()</span></a> is optional. pvRequests can be composed with individual network operation Builders.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">pvReq</span> <span class="o">=</span> <span class="n">Context</span><span class="p">::</span><span class="n">request</span><span class="p">()</span>
+                     <span class="o">.</span><span class="n">pvRequest</span><span class="p">(</span><span class="s2">&quot;field(value)field(blah)&quot;</span><span class="p">)</span>
+                     <span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="s2">&quot;pipeline&quot;</span><span class="p">,</span> <span class="n">true</span><span class="p">)</span>
+                     <span class="o">.</span><span class="n">build</span><span class="p">();</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<section id="get-info">
+<span id="clientgetapi"></span><h3>Get/Info<a class="headerlink" href="#get-info" title="Permalink to this heading">¶</a></h3>
+<p><a class="reference internal" href="#_CPPv4N4pvxs6client7Context4infoERKNSt6stringE" title="pvxs::client::Context::info"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::info()</span></code></a> and <a class="reference internal" href="#_CPPv4N4pvxs6client7Context3getERKNSt6stringE" title="pvxs::client::Context::get"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::get()</span></code></a> return a
+<a class="reference internal" href="#_CPPv4N4pvxs6client10GetBuilderE" title="pvxs::client::GetBuilder"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::GetBuilder</span></code></a> to prepare either a get() or info() (GET_FIELD)
+operation.  The practical difference being that info() yields a Value
+which will never have any fields marked.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10GetBuilderE">
+<span id="_CPPv3N4pvxs6client10GetBuilderE"></span><span id="_CPPv2N4pvxs6client10GetBuilderE"></span><span id="pvxs::client::GetBuilder"></span><span class="target" id="classpvxs_1_1client_1_1GetBuilder"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">GetBuilder</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder"><span class="n"><span class="pre">CommonBuilder</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client10GetBuilderE" title="pvxs::client::GetBuilder"><span class="n"><span class="pre">GetBuilder</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">CommonBase</span></span><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client10GetBuilderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Prepare a remote GET or GET_FIELD (info) operation. See <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1a6e415ebddca023f2446548c4e7c0b9ad"><span class="std std-ref">Context::get()</span></a> </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10GetBuilder6resultERRNSt8functionIFvRR6ResultEEE">
+<span id="_CPPv3N4pvxs6client10GetBuilder6resultERRNSt8functionIFvRR6ResultEEE"></span><span id="_CPPv2N4pvxs6client10GetBuilder6resultERRNSt8functionIFvRR6ResultEEE"></span><span class="target" id="classpvxs_1_1client_1_1GetBuilder_1a50e49ee77e27731fa2a11f7b92ddada6"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10GetBuilderE" title="pvxs::client::GetBuilder"><span class="n"><span class="pre">GetBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">result</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client6ResultE" title="pvxs::client::Result"><span class="n"><span class="pre">Result</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10GetBuilder6resultERRNSt8functionIFvRR6ResultEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback through which result <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> or an error will be delivered. The functor is stored in the <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> returned by <a class="reference internal" href="#classpvxs_1_1client_1_1GetBuilder_1a10c0f72b790675bd48cbff386dd912b0"><span class="std std-ref">exec()</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10GetBuilder4execEv">
+<span id="_CPPv3N4pvxs6client10GetBuilder4execEv"></span><span id="_CPPv2N4pvxs6client10GetBuilder4execEv"></span><span id="pvxs::client::GetBuilder::exec"></span><span class="target" id="classpvxs_1_1client_1_1GetBuilder_1a10c0f72b790675bd48cbff386dd912b0"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client9OperationE" title="pvxs::client::Operation"><span class="n"><span class="pre">Operation</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10GetBuilder4execEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Execute the network operation. The caller must keep returned <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> pointer until completion or the operation will be implicitly canceled. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="put">
+<span id="clientputapi"></span><h3>Put<a class="headerlink" href="#put" title="Permalink to this heading">¶</a></h3>
+<p><a class="reference internal" href="#_CPPv4N4pvxs6client7Context3putERKNSt6stringE" title="pvxs::client::Context::put"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::put()</span></code></a> returns a
+<a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::PutBuilder</span></code></a> to prepare a put() operation.
+In the generic form of put(), the field values to sent have
+to be passed to the builder callback.
+This is necessary as the server mandated PV type definition
+is not known when a Put operation is initiated.</p>
+<p>Additionally, a put operation will by default first fetch the
+present value of the PV and provide it to the builder callback.
+This allows eg. to perform string to index lookup when writing
+to an NTEnum.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10PutBuilderE">
+<span id="_CPPv3N4pvxs6client10PutBuilderE"></span><span id="_CPPv2N4pvxs6client10PutBuilderE"></span><span id="pvxs::client::PutBuilder"></span><span class="target" id="classpvxs_1_1client_1_1PutBuilder"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">PutBuilder</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder"><span class="n"><span class="pre">CommonBuilder</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><span class="n"><span class="pre">PutBuilder</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">PRBase</span></span><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client10PutBuilderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Prepare a remote PUT operation See <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1afa18a2ac9739511adbe181be93695c42"><span class="std std-ref">Context::put()</span></a> </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10PutBuilder12fetchPresentEb">
+<span id="_CPPv3N4pvxs6client10PutBuilder12fetchPresentEb"></span><span id="_CPPv2N4pvxs6client10PutBuilder12fetchPresentEb"></span><span id="pvxs::client::PutBuilder::fetchPresent__b"></span><span class="target" id="classpvxs_1_1client_1_1PutBuilder_1add0558ce478c57f39702bf2fd6705c9d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><span class="n"><span class="pre">PutBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">fetchPresent</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">f</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10PutBuilder12fetchPresentEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>If fetchPresent is true (the default). Then the <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> passed to the <a class="reference internal" href="#classpvxs_1_1client_1_1PutBuilder_1a5939c7b11a0b6bc68ef069c50e93b213"><span class="std std-ref">build()</span></a> callback will be initialized with a previous value for this PV.</p>
+<p>This will be necessary for situation like NTEnum to fetch the choices list. But may be undesirable when writing to array fields to avoid the expense of fetching a copy of the array to be overwritten. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN4pvxs6client10PutBuilder3setER10PutBuilderRKNSt6stringERK1Tb">
+<span id="_CPPv3I0EN4pvxs6client10PutBuilder3setERKNSt6stringERK1Tb"></span><span id="_CPPv2I0EN4pvxs6client10PutBuilder3setERKNSt6stringERK1Tb"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1client_1_1PutBuilder_1a9f26d83b45bbd2075919f4d845b6b538"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><span class="n"><span class="pre">PutBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">set</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs6client10PutBuilder3setER10PutBuilderRKNSt6stringERK1Tb" title="pvxs::client::PutBuilder::set::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">required</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">true</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN4pvxs6client10PutBuilder3setER10PutBuilderRKNSt6stringERK1Tb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Utilize default .<a class="reference internal" href="#classpvxs_1_1client_1_1PutBuilder_1a5939c7b11a0b6bc68ef069c50e93b213"><span class="std std-ref">build()</span></a> to assign a value to the named field.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – The field name to attempt to assign. </p></li>
+<li><p><strong>val</strong> – The value to assign. cf. <a class="reference internal" href="value.html#classpvxs_1_1Value_1a42e5cb69e44597ac1243f909074914de"><span class="std std-ref">Value::from()</span></a> </p></li>
+<li><p><strong>required</strong> – Whether to fail if this value can not be assigned to this field. </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10PutBuilder5buildERRNSt8functionIF5ValueRR5ValueEEE">
+<span id="_CPPv3N4pvxs6client10PutBuilder5buildERRNSt8functionIF5ValueRR5ValueEEE"></span><span id="_CPPv2N4pvxs6client10PutBuilder5buildERRNSt8functionIF5ValueRR5ValueEEE"></span><span class="target" id="classpvxs_1_1client_1_1PutBuilder_1a5939c7b11a0b6bc68ef069c50e93b213"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><span class="n"><span class="pre">PutBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">build</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="p"><span class="pre">(</span></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10PutBuilder5buildERRNSt8functionIF5ValueRR5ValueEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provide the builder callback.</p>
+<p>Once the PV type information is received from the server, this function will be responsible for populating a <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> which will actually be sent.</p>
+<p>The functor is stored in the <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> returned by <a class="reference internal" href="#classpvxs_1_1client_1_1PutBuilder_1a161e1ad9f3295577425eee6b07208f89"><span class="std std-ref">exec()</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10PutBuilder6resultERRNSt8functionIFvRR6ResultEEE">
+<span id="_CPPv3N4pvxs6client10PutBuilder6resultERRNSt8functionIFvRR6ResultEEE"></span><span id="_CPPv2N4pvxs6client10PutBuilder6resultERRNSt8functionIFvRR6ResultEEE"></span><span class="target" id="classpvxs_1_1client_1_1PutBuilder_1a3d70d69849370b00764c8c557cd426e1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10PutBuilderE" title="pvxs::client::PutBuilder"><span class="n"><span class="pre">PutBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">result</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client6ResultE" title="pvxs::client::Result"><span class="n"><span class="pre">Result</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10PutBuilder6resultERRNSt8functionIFvRR6ResultEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provide the operation result callback. This callback will be passed a <a class="reference internal" href="#classpvxs_1_1client_1_1Result"><span class="std std-ref">Result</span></a> which is either an empty <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> (success) or an exception on error.</p>
+<p>The functor is stored in the <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> returned by <a class="reference internal" href="#classpvxs_1_1client_1_1PutBuilder_1a161e1ad9f3295577425eee6b07208f89"><span class="std std-ref">exec()</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10PutBuilder4execEv">
+<span id="_CPPv3N4pvxs6client10PutBuilder4execEv"></span><span id="_CPPv2N4pvxs6client10PutBuilder4execEv"></span><span id="pvxs::client::PutBuilder::exec"></span><span class="target" id="classpvxs_1_1client_1_1PutBuilder_1a161e1ad9f3295577425eee6b07208f89"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client9OperationE" title="pvxs::client::Operation"><span class="n"><span class="pre">Operation</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10PutBuilder4execEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Execute the network operation. The caller must keep returned <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> pointer until completion or the operation will be implicitly canceled. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="rpc">
+<span id="clientrpcapi"></span><h3>RPC<a class="headerlink" href="#rpc" title="Permalink to this heading">¶</a></h3>
+<p><a class="reference internal" href="#_CPPv4N4pvxs6client7Context3rpcERKNSt6stringERK5Value" title="pvxs::client::Context::rpc"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::rpc()</span></code></a> returns a
+<a class="reference internal" href="#_CPPv4N4pvxs6client10RPCBuilderE" title="pvxs::client::RPCBuilder"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::RPCBuilder</span></code></a> to prepare an rpc() operation.
+There are two ways to prepare the arguments of an RPC operation.</p>
+<p>The recommended way is to use the one argument form of rpc()
+and zero or more calls to <a class="reference internal" href="#_CPPv4I0EN4pvxs6client10RPCBuilder3argER10RPCBuilderRKNSt6stringERK1T" title="pvxs::client::RPCBuilder::arg"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::RPCBuilder::arg()</span></code></a>
+to set argument names and values.
+These will be combined into a single argument structure
+conforming to the <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt5NTURIE" title="pvxs::nt::NTURI"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::NTURI</span></code></a> convention.</p>
+<p>Alternately, the two argument form of rpc() accepts are
+arbitrary Value which is passed to the server unaltered.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10RPCBuilderE">
+<span id="_CPPv3N4pvxs6client10RPCBuilderE"></span><span id="_CPPv2N4pvxs6client10RPCBuilderE"></span><span id="pvxs::client::RPCBuilder"></span><span class="target" id="classpvxs_1_1client_1_1RPCBuilder"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RPCBuilder</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder"><span class="n"><span class="pre">CommonBuilder</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client10RPCBuilderE" title="pvxs::client::RPCBuilder"><span class="n"><span class="pre">RPCBuilder</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">PRBase</span></span><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client10RPCBuilderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Prepare a remote RPC operation. See Context::rpc() </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10RPCBuilder6resultERRNSt8functionIFvRR6ResultEEE">
+<span id="_CPPv3N4pvxs6client10RPCBuilder6resultERRNSt8functionIFvRR6ResultEEE"></span><span id="_CPPv2N4pvxs6client10RPCBuilder6resultERRNSt8functionIFvRR6ResultEEE"></span><span class="target" id="classpvxs_1_1client_1_1RPCBuilder_1ac0a5d30bf5b089a4aaa947fb102a7f66"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10RPCBuilderE" title="pvxs::client::RPCBuilder"><span class="n"><span class="pre">RPCBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">result</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client6ResultE" title="pvxs::client::Result"><span class="n"><span class="pre">Result</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10RPCBuilder6resultERRNSt8functionIFvRR6ResultEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback through which result <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> or an error will be delivered. The functor is stored in the <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> returned by <a class="reference internal" href="#classpvxs_1_1client_1_1RPCBuilder_1a3501e120fffc2384f40d117b0685983a"><span class="std std-ref">exec()</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN4pvxs6client10RPCBuilder3argER10RPCBuilderRKNSt6stringERK1T">
+<span id="_CPPv3I0EN4pvxs6client10RPCBuilder3argERKNSt6stringERK1T"></span><span id="_CPPv2I0EN4pvxs6client10RPCBuilder3argERKNSt6stringERK1T"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1client_1_1RPCBuilder_1a86a530bfcee37d64930fd9fe54ba6fae"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client10RPCBuilderE" title="pvxs::client::RPCBuilder"><span class="n"><span class="pre">RPCBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">arg</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs6client10RPCBuilder3argER10RPCBuilderRKNSt6stringERK1T" title="pvxs::client::RPCBuilder::arg::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN4pvxs6client10RPCBuilder3argER10RPCBuilderRKNSt6stringERK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provide argument value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – Argument name </p></li>
+<li><p><strong>val</strong> – The value to assign. cf. <a class="reference internal" href="value.html#classpvxs_1_1Value_1a42e5cb69e44597ac1243f909074914de"><span class="std std-ref">Value::from()</span></a> </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10RPCBuilder4execEv">
+<span id="_CPPv3N4pvxs6client10RPCBuilder4execEv"></span><span id="_CPPv2N4pvxs6client10RPCBuilder4execEv"></span><span id="pvxs::client::RPCBuilder::exec"></span><span class="target" id="classpvxs_1_1client_1_1RPCBuilder_1a3501e120fffc2384f40d117b0685983a"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client9OperationE" title="pvxs::client::Operation"><span class="n"><span class="pre">Operation</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client10RPCBuilder4execEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Execute the network operation. The caller must keep returned <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> pointer until completion or the operation will be implicitly canceled. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="operation-and-result">
+<h3>Operation and Result<a class="headerlink" href="#operation-and-result" title="Permalink to this heading">¶</a></h3>
+<p>The exec() method of the *Builder objects returns a <code class="docutils literal notranslate"><span class="pre">shared_ptr</span></code>
+to an <a class="reference internal" href="#_CPPv4N4pvxs6client9OperationE" title="pvxs::client::Operation"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Operation</span></code></a> handle, which represents the
+in-progress network operation.  The caller <strong>must</strong> retain this
+handle until completion, or the operation will be implicitly
+cancelled.</p>
+<p>When an Operation completes, a <a class="reference internal" href="#_CPPv4N4pvxs6client6ResultE" title="pvxs::client::Result"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Result</span></code></a> is passed
+to the result() callback.  This object holds either a <a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a>
+if the operation succeeded, or an exception.</p>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9OperationE">
+<span id="_CPPv3N4pvxs6client9OperationE"></span><span id="_CPPv2N4pvxs6client9OperationE"></span><span id="pvxs::client::Operation"></span><span class="target" id="structpvxs_1_1client_1_1Operation"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Operation</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9OperationE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle for in-progress operation. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-types">Public Types</p>
+<dl class="cpp enum">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_tE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_tE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_tE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ff"></span><span class="k"><span class="pre">enum</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">operation_t</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_tE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> type. </p>
+<p><em>Values:</em></p>
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_t4InfoE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_t4InfoE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_t4InfoE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ffa2375f78f5cd0ff794cfb8951e6612def"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Info</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_t4InfoE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_t3GetE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_t3GetE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_t3GetE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ffa4ea769ba23d470342a7518389ad8af9f"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Get</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_t3GetE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_t3PutE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_t3PutE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_t3PutE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ffa2dc99c5bd56cbcdf2e280416e335c038"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Put</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_t3PutE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_t3RPCE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_t3RPCE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_t3RPCE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ffadd9cb3290cfbfc350cc070a3625d4dbd"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RPC</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_t3RPCE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_t7MonitorE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_t7MonitorE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_t7MonitorE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ffa679dfd0041c3f67bc1809f2febf45337"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Monitor</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_t7MonitorE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="cpp enumerator">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation11operation_t8DiscoverE">
+<span id="_CPPv3N4pvxs6client9Operation11operation_t8DiscoverE"></span><span id="_CPPv2N4pvxs6client9Operation11operation_t8DiscoverE"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1ab6af4a860bbf6e7c5cf21b05d68ed9ffad309665bfb482f6393de5decc863ec8a"></span><span class="k"><span class="pre">enumerator</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Discover</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation11operation_t8DiscoverE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation4nameEv">
+<span id="_CPPv3N4pvxs6client9Operation4nameEv"></span><span id="_CPPv2N4pvxs6client9Operation4nameEv"></span><span id="pvxs::client::Operation::name"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1a28aff1ebe7d911a9561fc80a7651909e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation4nameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>PV name. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation6cancelEv">
+<span id="_CPPv3N4pvxs6client9Operation6cancelEv"></span><span id="_CPPv2N4pvxs6client9Operation6cancelEv"></span><span id="pvxs::client::Operation::cancel"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1a9320b0342ae9039be66fc425771c42c3"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">cancel</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation6cancelEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Explicitly cancel a pending operation. Blocks until an in-progress callback has completed. </p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>true if the operation was canceled, or false if already complete. </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation4waitEd">
+<span id="_CPPv3N4pvxs6client9Operation4waitEd"></span><span id="_CPPv2N4pvxs6client9Operation4waitEd"></span><span id="pvxs::client::Operation::wait__double"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1a20a5871344f39eba5893fa9c390d78d7"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">wait</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">timeout</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation4waitEd" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Block until <a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> completion. </p>
+<p>As an alternative to a .result() callback, wait for operation completion, timeout, or interruption (via. <a class="reference internal" href="#structpvxs_1_1client_1_1Operation_1a3f93b4495afb277b431552177a9468ee"><span class="std std-ref">interrupt()</span></a> ).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>timeout</strong> – Time to wait prior to throwing TimeoutError. cf. epicsEvent::wait(double) </p>
+</dd>
+<dt class="field-even">Throws<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">Timeout</span></span></span> – Timeout exceeded </p></li>
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">Interrupted</span></span></span> – <a class="reference internal" href="#structpvxs_1_1client_1_1Operation_1a3f93b4495afb277b431552177a9468ee"><span class="std std-ref">interrupt()</span></a> called </p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>result <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. Always empty/invalid for put() </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation4waitEv">
+<span id="_CPPv3N4pvxs6client9Operation4waitEv"></span><span id="_CPPv2N4pvxs6client9Operation4waitEv"></span><span id="pvxs::client::Operation::wait"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1abfa99fdf7f82287733be6bffe80d6e2b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">wait</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation4waitEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#structpvxs_1_1client_1_1Operation_1a20a5871344f39eba5893fa9c390d78d7"><span class="std std-ref">wait(double)</span></a> without a timeout </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9Operation9interruptEv">
+<span id="_CPPv3N4pvxs6client9Operation9interruptEv"></span><span id="_CPPv2N4pvxs6client9Operation9interruptEv"></span><span id="pvxs::client::Operation::interrupt"></span><span class="target" id="structpvxs_1_1client_1_1Operation_1a3f93b4495afb277b431552177a9468ee"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">interrupt</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9Operation9interruptEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Queue an interruption of a <a class="reference internal" href="#structpvxs_1_1client_1_1Operation_1abfa99fdf7f82287733be6bffe80d6e2b"><span class="std std-ref">wait()</span></a> or <a class="reference internal" href="#structpvxs_1_1client_1_1Operation_1a20a5871344f39eba5893fa9c390d78d7"><span class="std std-ref">wait(double)</span></a> call. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6ResultE">
+<span id="_CPPv3N4pvxs6client6ResultE"></span><span id="_CPPv2N4pvxs6client6ResultE"></span><span id="pvxs::client::Result"></span><span class="target" id="classpvxs_1_1client_1_1Result"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Result</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6ResultE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Holder for a <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> or an exception. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6ResultclEv">
+<span id="_CPPv3N4pvxs6client6ResultclEv"></span><span id="_CPPv2N4pvxs6client6ResultclEv"></span><span id="pvxs::client::Result::call-operator"></span><span class="target" id="classpvxs_1_1client_1_1Result_1a25078a313d3a48675153f6dc8e2d906a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="k"><span class="pre">operator</span></span><span class="o"><span class="pre">()</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6ResultclEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Access to the <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>, or rethrow the exception. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="monitor">
+<span id="clientmonapi"></span><h3>Monitor<a class="headerlink" href="#monitor" title="Permalink to this heading">¶</a></h3>
+<p><a class="reference internal" href="#_CPPv4N4pvxs6client7Context7monitorERKNSt6stringE" title="pvxs::client::Context::monitor"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::monitor()</span></code></a> returns a
+<a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="pvxs::client::MonitorBuilder"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::MonitorBuilder</span></code></a> to prepare a MONITOR operation.
+The result of this preparation is a <a class="reference internal" href="#_CPPv4N4pvxs6client12SubscriptionE" title="pvxs::client::Subscription"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription</span></code></a>
+which represents the in-progress network operation.
+The caller <strong>must</strong> retain this handle or the operation will be implicitly cancelled.</p>
+<p>Until cancelled, a Subscription will attempt to (re)connect to the requested PV.</p>
+<p>A Subscription object allows access to a queue of data updates as Value and events/errors as exceptions.
+The <a class="reference internal" href="#_CPPv4N4pvxs6client12Subscription3popEv" title="pvxs::client::Subscription::pop"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::pop()</span></code></a> method will remove an entry from the queue, or return an empty/invalid Value.
+Data updates are returned as a valid Value.
+Events/errors are thrown as exceptions.</p>
+<p>An <a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilder5eventERRNSt8functionIFvR12SubscriptionEEE" title="pvxs::client::MonitorBuilder::event"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::MonitorBuilder::event()</span></code></a> callback is only invoked when the
+Subscription queue becomes not-empty.
+It will not be called again until <a class="reference internal" href="#_CPPv4N4pvxs6client12Subscription3popEv" title="pvxs::client::Subscription::pop"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::pop()</span></code></a> has returned
+an empty/invliad Value.</p>
+<p>The special exceptions <a class="reference internal" href="#_CPPv4N4pvxs6client9ConnectedE" title="pvxs::client::Connected"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Connected</span></code></a>, <a class="reference internal" href="#_CPPv4N4pvxs6client10DisconnectE" title="pvxs::client::Disconnect"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Disconnect</span></code></a>, and <a class="reference internal" href="#_CPPv4N4pvxs6client8FinishedE" title="pvxs::client::Finished"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Finished</span></code></a>
+have specific meaning when thrown by <a class="reference internal" href="#_CPPv4N4pvxs6client12Subscription3popEv" title="pvxs::client::Subscription::pop"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::pop()</span></code></a>.</p>
+<dl class="simple">
+<dt>Connected</dt><dd><p>Depending on <a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilder13maskConnectedEb" title="pvxs::client::MonitorBuilder::maskConnected"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::MonitorBuilder::maskConnected()</span></code></a> (default true).
+Queued when a Subscription becomes connected.
+The Connected object include the server host:port as well as a (client) time of connection.</p>
+</dd>
+<dt>Disconnect</dt><dd><p>Depending on <a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilder16maskDisconnectedEb" title="pvxs::client::MonitorBuilder::maskDisconnected"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::MonitorBuilder::maskDisconnected()</span></code></a> (default false).
+Queued when a Subscription becomes disconnected.</p>
+</dd>
+<dt>Finished</dt><dd><p>Depending on <a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilder16maskDisconnectedEb" title="pvxs::client::MonitorBuilder::maskDisconnected"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::MonitorBuilder::maskDisconnected()</span></code></a> (default false).
+Queued when the server indicates that Subscription will receive no more date updates as a normal completion.
+Finished is a sub-class of Disconnect.</p>
+</dd>
+</dl>
+<p>There are several aspects of a Subscription which may be selected through the MonitorBuilder.
+The special <a class="reference internal" href="#_CPPv4N4pvxs6client9ConnectedE" title="pvxs::client::Connected"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Connected</span></code></a> and <a class="reference internal" href="#_CPPv4N4pvxs6client10DisconnectE" title="pvxs::client::Disconnect"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Disconnect</span></code></a> “errors” may appear in
+the event queue</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14MonitorBuilderE">
+<span id="_CPPv3N4pvxs6client14MonitorBuilderE"></span><span id="_CPPv2N4pvxs6client14MonitorBuilderE"></span><span id="pvxs::client::MonitorBuilder"></span><span class="target" id="classpvxs_1_1client_1_1MonitorBuilder"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">MonitorBuilder</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder"><span class="n"><span class="pre">CommonBuilder</span></span></a><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="pvxs::client::MonitorBuilder"><span class="n"><span class="pre">MonitorBuilder</span></span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">detail</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">CommonBase</span></span><span class="p"><span class="pre">&gt;</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Prepare a remote subscription See <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1aa008ec0492bdb5f87abbf39c929b4da1"><span class="std std-ref">Context::monitor()</span></a> </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14MonitorBuilder5eventERRNSt8functionIFvR12SubscriptionEEE">
+<span id="_CPPv3N4pvxs6client14MonitorBuilder5eventERRNSt8functionIFvR12SubscriptionEEE"></span><span id="_CPPv2N4pvxs6client14MonitorBuilder5eventERRNSt8functionIFvR12SubscriptionEEE"></span><span class="target" id="classpvxs_1_1client_1_1MonitorBuilder_1a6874d2ff2dacbffd8253eeed8c521808"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="pvxs::client::MonitorBuilder"><span class="n"><span class="pre">MonitorBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">event</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client12SubscriptionE" title="pvxs::client::Subscription"><span class="n"><span class="pre">Subscription</span></span></a><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14MonitorBuilder5eventERRNSt8functionIFvR12SubscriptionEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Install FIFO not-empty event callback.</p>
+<p>This functor will be called each time the <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription"><span class="std std-ref">Subscription</span></a> event queue becomes not empty. A <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription"><span class="std std-ref">Subscription</span></a> becomes empty when <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription_1ae54ed237b8fb8bd51369c65eea0943a4"><span class="std std-ref">Subscription::pop()</span></a> returns an empty/invalid <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>.</p>
+<p>The functor is stored in the <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription"><span class="std std-ref">Subscription</span></a> returned by <a class="reference internal" href="#classpvxs_1_1client_1_1MonitorBuilder_1ae58fb08017819f91d15f2dd07343b411"><span class="std std-ref">exec()</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14MonitorBuilder13maskConnectedEb">
+<span id="_CPPv3N4pvxs6client14MonitorBuilder13maskConnectedEb"></span><span id="_CPPv2N4pvxs6client14MonitorBuilder13maskConnectedEb"></span><span id="pvxs::client::MonitorBuilder::maskConnected__b"></span><span class="target" id="classpvxs_1_1client_1_1MonitorBuilder_1a010844cc94edd302f33b5a5cc30cc851"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="pvxs::client::MonitorBuilder"><span class="n"><span class="pre">MonitorBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">maskConnected</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">m</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">true</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14MonitorBuilder13maskConnectedEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Include <a class="reference internal" href="#structpvxs_1_1client_1_1Connected"><span class="std std-ref">Connected</span></a> exceptions in queue (default false). </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14MonitorBuilder16maskDisconnectedEb">
+<span id="_CPPv3N4pvxs6client14MonitorBuilder16maskDisconnectedEb"></span><span id="_CPPv2N4pvxs6client14MonitorBuilder16maskDisconnectedEb"></span><span id="pvxs::client::MonitorBuilder::maskDisconnected__b"></span><span class="target" id="classpvxs_1_1client_1_1MonitorBuilder_1ad9474f9b69b4eb7df42fa3253ac087ed"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14MonitorBuilderE" title="pvxs::client::MonitorBuilder"><span class="n"><span class="pre">MonitorBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">maskDisconnected</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">m</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">true</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14MonitorBuilder16maskDisconnectedEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Include Disconnected exceptions in queue (default true). </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14MonitorBuilder4execEv">
+<span id="_CPPv3N4pvxs6client14MonitorBuilder4execEv"></span><span id="_CPPv2N4pvxs6client14MonitorBuilder4execEv"></span><span id="pvxs::client::MonitorBuilder::exec"></span><span class="target" id="classpvxs_1_1client_1_1MonitorBuilder_1ae58fb08017819f91d15f2dd07343b411"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client12SubscriptionE" title="pvxs::client::Subscription"><span class="n"><span class="pre">Subscription</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14MonitorBuilder4execEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Submit request to subscribe. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12SubscriptionE">
+<span id="_CPPv3N4pvxs6client12SubscriptionE"></span><span id="_CPPv2N4pvxs6client12SubscriptionE"></span><span id="pvxs::client::Subscription"></span><span class="target" id="structpvxs_1_1client_1_1Subscription"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Subscription</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client12SubscriptionE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle for monitor subscription. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12Subscription4nameEv">
+<span id="_CPPv3N4pvxs6client12Subscription4nameEv"></span><span id="_CPPv2N4pvxs6client12Subscription4nameEv"></span><span id="pvxs::client::Subscription::name"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1a85b4eafb6e4f40dcb55bd0269445216a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client12Subscription4nameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>PV name. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12Subscription6cancelEv">
+<span id="_CPPv3N4pvxs6client12Subscription6cancelEv"></span><span id="_CPPv2N4pvxs6client12Subscription6cancelEv"></span><span id="pvxs::client::Subscription::cancel"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1a78a1eba1708d6f1352d462fe8eab3305"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">cancel</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client12Subscription6cancelEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Explicitly cancel a active subscription. Blocks until any in-progress callback has completed. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12Subscription5pauseEb">
+<span id="_CPPv3N4pvxs6client12Subscription5pauseEb"></span><span id="_CPPv2N4pvxs6client12Subscription5pauseEb"></span><span id="pvxs::client::Subscription::pause__b"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1af3b4c9b290454660661f1781a34a7822"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pause</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">p</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">true</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client12Subscription5pauseEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Ask a server to stop (true) or re-start (false), sending updates to this <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription"><span class="std std-ref">Subscription</span></a>. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12Subscription6resumeEv">
+<span id="_CPPv3N4pvxs6client12Subscription6resumeEv"></span><span id="_CPPv2N4pvxs6client12Subscription6resumeEv"></span><span id="pvxs::client::Subscription::resume"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1ae759450b08c58a7f8549fff8a441be5a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">resume</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client12Subscription6resumeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Shorthand for. </p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pause</span><span class="p">(</span><span class="n">false</span><span class="p">)</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12Subscription3popEv">
+<span id="_CPPv3N4pvxs6client12Subscription3popEv"></span><span id="_CPPv2N4pvxs6client12Subscription3popEv"></span><span id="pvxs::client::Subscription::pop"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1ae54ed237b8fb8bd51369c65eea0943a4"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">pop</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client12Subscription3popEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>De-queue update from subscription event queue.</p>
+<p>If the queue is empty, return an empty/invalid <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> (<a class="reference internal" href="value.html#classpvxs_1_1Value_1a73bc11a2d87d480f088cf12b4baef070"><span class="std std-ref">Value::valid()</span></a>==false). A data update is returned as a <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. An error or special event is thrown.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">std</span><span class="p">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Subscription</span><span class="o">&gt;</span> <span class="n">sub</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="k">try</span> <span class="p">{</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">auto</span> <span class="n">update</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span> <span class="p">{</span>
+        <span class="o">//</span> <span class="n">have</span> <span class="n">data</span> <span class="n">update</span>
+        <span class="o">...</span>
+    <span class="p">}</span>
+    <span class="o">//</span> <span class="n">queue</span> <span class="n">empty</span>
+<span class="p">}</span> <span class="n">catch</span><span class="p">(</span><span class="n">Connected</span><span class="o">&amp;</span> <span class="n">con</span><span class="p">)</span> <span class="p">{</span>   <span class="o">//</span> <span class="k">if</span> <span class="n">MonitorBuilder</span><span class="p">::</span><span class="n">maskConnected</span><span class="p">(</span><span class="n">false</span><span class="p">)</span>
+<span class="p">}</span> <span class="n">catch</span><span class="p">(</span><span class="n">Finished</span><span class="o">&amp;</span> <span class="n">con</span><span class="p">)</span> <span class="p">{</span>    <span class="o">//</span> <span class="k">if</span> <span class="n">MonitorBuilder</span><span class="p">::</span><span class="n">maskDisconnected</span><span class="p">(</span><span class="n">false</span><span class="p">)</span>
+<span class="p">}</span> <span class="n">catch</span><span class="p">(</span><span class="n">Disconnect</span><span class="o">&amp;</span> <span class="n">con</span><span class="p">)</span> <span class="p">{</span>  <span class="o">//</span> <span class="k">if</span> <span class="n">MonitorBuilder</span><span class="p">::</span><span class="n">maskDisconnected</span><span class="p">(</span><span class="n">false</span><span class="p">)</span>
+<span class="p">}</span> <span class="n">catch</span><span class="p">(</span><span class="n">RemoteError</span><span class="o">&amp;</span> <span class="n">con</span><span class="p">)</span> <span class="p">{</span> <span class="o">//</span> <span class="n">error</span> <span class="n">message</span> <span class="kn">from</span> <span class="nn">server</span>
+<span class="p">}</span> <span class="n">catch</span><span class="p">(</span><span class="n">std</span><span class="p">::</span><span class="n">exception</span><span class="o">&amp;</span> <span class="n">con</span><span class="p">)</span> <span class="p">{</span> <span class="o">//</span> <span class="n">client</span> <span class="n">side</span> <span class="n">error</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+ </p>
+<dl class="field-list simple">
+<dt class="field-odd">Throws<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><a class="reference internal" href="#_CPPv4N4pvxs6client9ConnectedE" title="pvxs::client::Connected"><span class="n">Connected</span></a></span></span> – (depending on <a class="reference internal" href="#classpvxs_1_1client_1_1MonitorBuilder_1a010844cc94edd302f33b5a5cc30cc851"><span class="std std-ref">MonitorBuilder::maskConnected()</span></a>) </p></li>
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><a class="reference internal" href="#_CPPv4N4pvxs6client10DisconnectE" title="pvxs::client::Disconnect"><span class="n">Disconnect</span></a></span></span> – (depending on MonitorBuilder::maskDisconnect()) </p></li>
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><a class="reference internal" href="#_CPPv4N4pvxs6client8FinishedE" title="pvxs::client::Finished"><span class="n">Finished</span></a></span></span> – (depending on MonitorBuilder::maskDisconnect()) </p></li>
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><a class="reference internal" href="#_CPPv4N4pvxs6client11RemoteErrorE" title="pvxs::client::RemoteError"><span class="n">RemoteError</span></a></span></span> – For server signaled errors </p></li>
+<li><p><span><span class="cpp-expr sig sig-inline cpp"><span class="n">std</span><span class="p">::</span><span class="n">exception</span></span></span> – For client side failures.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A valid <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> until the queue is empty </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client12Subscription5statsER16SubscriptionStatb">
+<span id="_CPPv3N4pvxs6client12Subscription5statsER16SubscriptionStatb"></span><span id="_CPPv2N4pvxs6client12Subscription5statsER16SubscriptionStatb"></span><span id="pvxs::client::Subscription::stats__SubscriptionStatR.b"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1aafbdcf276f95a1976e342d73b79a8c45"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">stats</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">SubscriptionStat</span></span><span class="p"><span class="pre">&amp;</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">reset</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client12Subscription5statsER16SubscriptionStatb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Poll statistics <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>1.1.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6client12Subscription16shared_from_thisEv">
+<span id="_CPPv3NK4pvxs6client12Subscription16shared_from_thisEv"></span><span id="_CPPv2NK4pvxs6client12Subscription16shared_from_thisEv"></span><span id="pvxs::client::Subscription::shared_from_thisC"></span><span class="target" id="structpvxs_1_1client_1_1Subscription_1a7359e54d208722c14c9c5b9aa25acda5"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client12SubscriptionE" title="pvxs::client::Subscription"><span class="n"><span class="pre">Subscription</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">shared_from_this</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6client12Subscription16shared_from_thisEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return strong internal reference which will not prevent implicit cancellation when the last reference returned by exec() is released. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="connect">
+<h3>Connect<a class="headerlink" href="#connect" title="Permalink to this heading">¶</a></h3>
+<p>Request that a Channel be created now which may be used by other Operations,
+allowing them to complete more quickly.</p>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14ConnectBuilderE">
+<span id="_CPPv3N4pvxs6client14ConnectBuilderE"></span><span id="_CPPv2N4pvxs6client14ConnectBuilderE"></span><span id="pvxs::client::ConnectBuilder"></span><span class="target" id="classpvxs_1_1client_1_1ConnectBuilder"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">ConnectBuilder</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client14ConnectBuilderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>cf. <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1ae9aa120fa5a6f813653cb57b4914e14e"><span class="std std-ref">Context::connect()</span></a> <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14ConnectBuilder9onConnectERRNSt8functionIFvvEEE">
+<span id="_CPPv3N4pvxs6client14ConnectBuilder9onConnectERRNSt8functionIFvvEEE"></span><span id="_CPPv2N4pvxs6client14ConnectBuilder9onConnectERRNSt8functionIFvvEEE"></span><span class="target" id="classpvxs_1_1client_1_1ConnectBuilder_1a8b177f7865ff923cbf0f5fb20530324b"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14ConnectBuilderE" title="pvxs::client::ConnectBuilder"><span class="n"><span class="pre">ConnectBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">onConnect</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14ConnectBuilder9onConnectERRNSt8functionIFvvEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handler to be invoked when channel becomes connected. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14ConnectBuilder12onDisconnectERRNSt8functionIFvvEEE">
+<span id="_CPPv3N4pvxs6client14ConnectBuilder12onDisconnectERRNSt8functionIFvvEEE"></span><span id="_CPPv2N4pvxs6client14ConnectBuilder12onDisconnectERRNSt8functionIFvvEEE"></span><span class="target" id="classpvxs_1_1client_1_1ConnectBuilder_1a294eca6e8b43638f52a485c9dc2f4551"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14ConnectBuilderE" title="pvxs::client::ConnectBuilder"><span class="n"><span class="pre">ConnectBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">onDisconnect</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">function</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">void</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">cb</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14ConnectBuilder12onDisconnectERRNSt8functionIFvvEEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handler to be invoked when channel becomes disconnected. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14ConnectBuilder10syncCancelEb">
+<span id="_CPPv3N4pvxs6client14ConnectBuilder10syncCancelEb"></span><span id="_CPPv2N4pvxs6client14ConnectBuilder10syncCancelEb"></span><span id="pvxs::client::ConnectBuilder::syncCancel__b"></span><span class="target" id="classpvxs_1_1client_1_1ConnectBuilder_1ad7ed11b86b385240042fb902d943ded8"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client14ConnectBuilderE" title="pvxs::client::ConnectBuilder"><span class="n"><span class="pre">ConnectBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">syncCancel</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14ConnectBuilder10syncCancelEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Controls whether Connect::~Connect() synchronizes.</p>
+<p>When true (the default) explicit or implicit cancel blocks until any in progress callback has completed. This makes safe some use of references in callbacks. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client14ConnectBuilder4execEv">
+<span id="_CPPv3N4pvxs6client14ConnectBuilder4execEv"></span><span id="_CPPv2N4pvxs6client14ConnectBuilder4execEv"></span><span id="pvxs::client::ConnectBuilder::exec"></span><span class="target" id="classpvxs_1_1client_1_1ConnectBuilder_1a04317c6a5e33b445d0c2a3eb02763ba5"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client7ConnectE" title="pvxs::client::Connect"><span class="n"><span class="pre">Connect</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">exec</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client14ConnectBuilder4execEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Submit request to connect. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client7ConnectE">
+<span id="_CPPv3N4pvxs6client7ConnectE"></span><span id="_CPPv2N4pvxs6client7ConnectE"></span><span id="pvxs::client::Connect"></span><span class="target" id="structpvxs_1_1client_1_1Connect"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Connect</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client7ConnectE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Handle for entry in Channel cache. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6client7Connect4nameEv">
+<span id="_CPPv3NK4pvxs6client7Connect4nameEv"></span><span id="_CPPv2NK4pvxs6client7Connect4nameEv"></span><span id="pvxs::client::Connect::nameC"></span><span class="target" id="structpvxs_1_1client_1_1Connect_1a0cb961062b6cd4918e3ab9c8b4bc7af8"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6client7Connect4nameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Name passed to <a class="reference internal" href="#classpvxs_1_1client_1_1Context_1ae9aa120fa5a6f813653cb57b4914e14e"><span class="std std-ref">Context::connect()</span></a> </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6client7Connect9connectedEv">
+<span id="_CPPv3NK4pvxs6client7Connect9connectedEv"></span><span id="_CPPv2NK4pvxs6client7Connect9connectedEv"></span><span id="pvxs::client::Connect::connectedC"></span><span class="target" id="structpvxs_1_1client_1_1Connect_1acfebc48ac3e49644845a6b5004c3a84e"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">connected</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6client7Connect9connectedEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Poll (momentary) connection status. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</section>
+<section id="threading">
+<h3>Threading<a class="headerlink" href="#threading" title="Permalink to this heading">¶</a></h3>
+<p>A client Context will invoke user callback functions from one or more internal worker threads.
+However, it is guaranteed that callbacks relating to a given Channel (PV name + priority) will never be executed concurrently.
+This implies that callbacks for a single operation will also never be executed concurrently.</p>
+<p>User code must avoid doing unnecessary work from within a callback function as this will
+prevent other callbacks from be executed.</p>
+</section>
+<section id="ownership">
+<h3>Ownership<a class="headerlink" href="#ownership" title="Permalink to this heading">¶</a></h3>
+<p>User provided callbacks are in the form of std::function which may,
+directly or indirectly, store <code class="docutils literal notranslate"><span class="pre">shared_ptr&lt;&gt;</span></code> instances.
+The returned Operation and Subscription instances should be treated as
+storing the std::function instance(s) and thus any <code class="docutils literal notranslate"><span class="pre">shared_ptr&lt;&gt;</span></code> captured in them.</p>
+<p>Therefore, in order to avoid a resource leak,
+it is advisable to consider whether a returned Operation or Subscription
+may participate in a reference loop.</p>
+<p>For example, the following creates a reference loop between the Operation instance and the “mystruct” instance.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span><span class="w"> </span><span class="nc">mystruct</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Operation</span><span class="o">&gt;</span><span class="w"> </span><span class="n">op</span><span class="p">;</span><span class="w"> </span><span class="c1">// &lt;-- Danger!</span>
+<span class="p">};</span>
+<span class="k">auto</span><span class="w"> </span><span class="n">myptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">mystruct</span><span class="o">&gt;</span><span class="p">();</span>
+
+<span class="n">Context</span><span class="w"> </span><span class="nf">ctxt</span><span class="p">(...);</span>
+<span class="n">myptr</span><span class="o">-&gt;</span><span class="n">op</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctxt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;pv:name&quot;</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="n">result</span><span class="p">([</span><span class="n">myptr</span><span class="p">](</span><span class="n">Result</span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// &lt;-- Danger!</span>
+<span class="w">                </span><span class="p">})</span>
+<span class="w">                </span><span class="p">.</span><span class="n">exec</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>While such loops can be explicitly broken (eg. by NULLing ‘myptr-&gt;op’) it is strongly
+recommended to avoid such situations as unexpected (exceptional) conditions can easily
+lead to resource leaks which are quite difficult to detect and isolate.</p>
+<p>Where possible it is recommended to capture weak_ptr&lt;&gt; instances.</p>
+</section>
+</section>
+<section id="pvrequest">
+<h2>pvRequest<a class="headerlink" href="#pvrequest" title="Permalink to this heading">¶</a></h2>
+<p>All operations except info() (GET_FIELD) take a Value which servers may use to modify or qualify the operation.
+Conventionally, the two ways this may be done is to provide a mask to limit the (sub)fields for which data is returned.
+Secondly, to provide certain well-known options to modify the operation.</p>
+<p>The pvRequest conditions may be specified in three ways through the methods of <a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::detail::CommonBuilder</span></code></a>
+exposed through the individual *Builder types.</p>
+<dl class="simple">
+<dt>Programmatic</dt><dd><p>The field() and record() methods.</p>
+</dd>
+<dt>Textual</dt><dd><p>The pvRequest() method accepts a string which is parsed into calls to the field() and record() methods.
+These two approaches may be intermixed.</p>
+</dd>
+<dt>Fallback</dt><dd><p>The rawRequest() method accepts an externally assembled Value which is sent without modification.</p>
+</dd>
+</dl>
+<dl class="cpp class">
+<dt class="sig sig-object cpp" id="_CPPv4I00EN4pvxs6client6detail13CommonBuilderE">
+<span id="_CPPv3I00EN4pvxs6client6detail13CommonBuilderE"></span><span id="_CPPv2I00EN4pvxs6client6detail13CommonBuilderE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">SubBuilder</span></span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Base</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1client_1_1detail_1_1CommonBuilder"></span><span class="k"><span class="pre">class</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">CommonBuilder</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder::Base"><span class="n"><span class="pre">Base</span></span></a><a class="headerlink" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Options common to all operations. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6detail13CommonBuilder5fieldERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client6detail13CommonBuilder5fieldERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client6detail13CommonBuilder5fieldERKNSt6stringE"></span><span id="pvxs::client::detail::CommonBuilder::field__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1detail_1_1CommonBuilder_1a42dc52d8bca0d1e1cc33138b9ad51877"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder::SubBuilder"><span class="n"><span class="pre">SubBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">field</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">fld</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6detail13CommonBuilder5fieldERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add field to pvRequest blob. A more efficient alternative to <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pvRequest</span><span class="p">(</span><span class="s2">&quot;field(name)&quot;</span><span class="p">)</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I0EN4pvxs6client6detail13CommonBuilder6recordER10SubBuilderRKNSt6stringERK1T">
+<span id="_CPPv3I0EN4pvxs6client6detail13CommonBuilder6recordERKNSt6stringERK1T"></span><span id="_CPPv2I0EN4pvxs6client6detail13CommonBuilder6recordERKNSt6stringERK1T"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="k"><span class="pre">typename</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">T</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="target" id="classpvxs_1_1client_1_1detail_1_1CommonBuilder_1a7cb286854fc587c78bbb307ad9067c7f"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder::SubBuilder"><span class="n"><span class="pre">SubBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">record</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">name</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I0EN4pvxs6client6detail13CommonBuilder6recordER10SubBuilderRKNSt6stringERK1T" title="pvxs::client::detail::CommonBuilder::record::T"><span class="n"><span class="pre">T</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">val</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I0EN4pvxs6client6detail13CommonBuilder6recordER10SubBuilderRKNSt6stringERK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a key/value option to the request.</p>
+<p>Well known options include:</p>
+<p><ul class="simple">
+<li><p>queueSize : positive integer</p></li>
+<li><p>block : bool</p></li>
+<li><p>process : bool or string “true”, “false”, or “passive”</p></li>
+<li><p>pipeline : bool</p></li>
+</ul>
+</p>
+<p>A more efficient alternative to <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pvRequest</span><span class="p">(</span><span class="s2">&quot;record[key=value]&quot;</span><span class="p">)</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6detail13CommonBuilder9pvRequestERKNSt6stringE">
+<span id="_CPPv3N4pvxs6client6detail13CommonBuilder9pvRequestERKNSt6stringE"></span><span id="_CPPv2N4pvxs6client6detail13CommonBuilder9pvRequestERKNSt6stringE"></span><span id="pvxs::client::detail::CommonBuilder::pvRequest__ssCR"></span><span class="target" id="classpvxs_1_1client_1_1detail_1_1CommonBuilder_1afb3b25d25ec71b9ffdd53953faf68cf1"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder::SubBuilder"><span class="n"><span class="pre">SubBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">pvRequest</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">expr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6detail13CommonBuilder9pvRequestERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Parse pvRequest string.</p>
+<p>Supported syntax is a list of zero or more entities separated by zero or more spaces.</p>
+<p><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">field(&lt;fld.name&gt;)</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">record[&lt;key&gt;=\&lt;value&gt;]</span></code> </p></li>
+</ul>
+</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6detail13CommonBuilder10rawRequestERK5Value">
+<span id="_CPPv3N4pvxs6client6detail13CommonBuilder10rawRequestERK5Value"></span><span id="_CPPv2N4pvxs6client6detail13CommonBuilder10rawRequestERK5Value"></span><span id="pvxs::client::detail::CommonBuilder::rawRequest__ValueCR"></span><span class="target" id="classpvxs_1_1client_1_1detail_1_1CommonBuilder_1a5aacd3c25c59b120b8b7df60ba4eaf9a"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder::SubBuilder"><span class="n"><span class="pre">SubBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">rawRequest</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><span class="n"><span class="pre">Value</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">r</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6detail13CommonBuilder10rawRequestERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Store raw pvRequest blob. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6detail13CommonBuilder10syncCancelEb">
+<span id="_CPPv3N4pvxs6client6detail13CommonBuilder10syncCancelEb"></span><span id="_CPPv2N4pvxs6client6detail13CommonBuilder10syncCancelEb"></span><span id="pvxs::client::detail::CommonBuilder::syncCancel__b"></span><span class="target" id="classpvxs_1_1client_1_1detail_1_1CommonBuilder_1abfa160603677c73f2a60059065e76aab"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I00EN4pvxs6client6detail13CommonBuilderE" title="pvxs::client::detail::CommonBuilder::SubBuilder"><span class="n"><span class="pre">SubBuilder</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">syncCancel</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">b</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6detail13CommonBuilder10syncCancelEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Controls whether <a class="reference internal" href="#structpvxs_1_1client_1_1Operation_1a9320b0342ae9039be66fc425771c42c3"><span class="std std-ref">Operation::cancel()</span></a> and <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription_1a78a1eba1708d6f1352d462fe8eab3305"><span class="std std-ref">Subscription::cancel()</span></a> synchronize.</p>
+<p>When true (the default) explicit or implicit cancel blocks until any in progress callback has completed. This makes safe some use of references in callbacks. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<section id="syntax">
+<h3>Syntax<a class="headerlink" href="#syntax" title="Permalink to this heading">¶</a></h3>
+<p>The parser behind <a class="reference internal" href="#_CPPv4N4pvxs6client6detail13CommonBuilder9pvRequestERKNSt6stringE" title="pvxs::client::detail::CommonBuilder::pvRequest"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::detail::CommonBuilder::pvRequest()</span></code></a> understands the following grammar.</p>
+<pre>
+<strong id="grammar-token-pvRequest">pvRequest  </strong> ::=  | entry | pvRequest entry
+<strong id="grammar-token-entry">entry      </strong> ::=  field | record | field_name
+<strong id="grammar-token-field">field      </strong> ::=  &quot;field&quot; &quot;(&quot; field_list &quot;)&quot;
+<strong id="grammar-token-record">record     </strong> ::=  &quot;record&quot; &quot;[&quot; option_list &quot;]&quot;
+<strong id="grammar-token-field_list">field_list </strong> ::=  | field_name | field_list &quot;,&quot; field_name
+<strong id="grammar-token-option_list">option_list</strong> ::=  | option | option_list option
+<strong id="grammar-token-option">option     </strong> ::=  key &quot;=&quot; value
+</pre>
+<p>For examples:</p>
+<ul class="simple">
+<li><p>“field()”</p></li>
+<li><p>“field(value)”</p></li>
+<li><p>“value”</p></li>
+<li><p>“field(value,alarm)”</p></li>
+<li><p>“field(value)field(alarm)”</p></li>
+<li><p>“record[wait=true]”</p></li>
+<li><p>“field()record[wait=true]”</p></li>
+<li><p>“field(value)record[wait=true]”</p></li>
+</ul>
+</section>
+</section>
+<section id="misc">
+<h2>Misc<a class="headerlink" href="#misc" title="Permalink to this heading">¶</a></h2>
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6ConfigE">
+<span id="_CPPv3N4pvxs6client6ConfigE"></span><span id="_CPPv2N4pvxs6client6ConfigE"></span><span id="pvxs::client::Config"></span><span class="target" id="structpvxs_1_1client_1_1Config"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Config</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6ConfigE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-functions">Public Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config8applyEnvEv">
+<span id="_CPPv3N4pvxs6client6Config8applyEnvEv"></span><span id="_CPPv2N4pvxs6client6Config8applyEnvEv"></span><span id="pvxs::client::Config::applyEnv"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a762ded7e50de74bd9160d8d5cff1a60e"></span><a class="reference internal" href="#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">applyEnv</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config8applyEnvEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>update using defined EPICS_PVA* environment variables </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config9applyDefsERK6defs_t">
+<span id="_CPPv3N4pvxs6client6Config9applyDefsERK6defs_t"></span><span id="_CPPv2N4pvxs6client6Config9applyDefsERK6defs_t"></span><span id="pvxs::client::Config::applyDefs__defs_tCR"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a58417136564908f2cf76ade572f0e18c"></span><a class="reference internal" href="#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">applyDefs</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">defs_t</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">defs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config9applyDefsERK6defs_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>update with definitions as with EPICS_PVA* environment variables Process environment is not changed. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6client6Config10updateDefsER6defs_t">
+<span id="_CPPv3NK4pvxs6client6Config10updateDefsER6defs_t"></span><span id="_CPPv2NK4pvxs6client6Config10updateDefsER6defs_t"></span><span id="pvxs::client::Config::updateDefs__defs_tRC"></span><span class="target" id="structpvxs_1_1client_1_1Config_1ac03f9158c322c57665efed5ddc53d81a"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">updateDefs</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">defs_t</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">defs</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6client6Config10updateDefsER6defs_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>extract definitions with environment variable names as keys. Process environment is not changed. </p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config6expandEv">
+<span id="_CPPv3N4pvxs6client6Config6expandEv"></span><span id="_CPPv2N4pvxs6client6Config6expandEv"></span><span id="pvxs::client::Config::expand"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a0fdf61f24a96ee3116a1d4f030b1b81c"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">expand</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config6expandEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Apply rules to translate current requested configuration into one which can actually be loaded based on current host network configuration.</p>
+<p>Explicit use of <a class="reference internal" href="#structpvxs_1_1client_1_1Config_1a0fdf61f24a96ee3116a1d4f030b1b81c"><span class="std std-ref">expand()</span></a> is optional as the <a class="reference internal" href="#classpvxs_1_1client_1_1Context"><span class="std std-ref">Context</span></a> ctor expands any <a class="reference internal" href="#structpvxs_1_1client_1_1Config"><span class="std std-ref">Config</span></a> given. <a class="reference internal" href="#structpvxs_1_1client_1_1Config_1a0fdf61f24a96ee3116a1d4f030b1b81c"><span class="std std-ref">expand()</span></a> is provided as a aid to help understand how Context::effective() is arrived at.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Post<span class="colon">:</span></dt>
+<dd class="field-odd"><p>autoAddrList==false </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4pvxs6client6Config5buildEv">
+<span id="_CPPv3NK4pvxs6client6Config5buildEv"></span><span id="_CPPv2NK4pvxs6client6Config5buildEv"></span><span id="pvxs::client::Config::buildC"></span><span class="target" id="structpvxs_1_1client_1_1Config_1ae5d9aada76b2b742b0e35270d3a4601d"></span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client7ContextE" title="pvxs::client::Context"><span class="n"><span class="pre">Context</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">build</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4pvxs6client6Config5buildEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a new client <a class="reference internal" href="#classpvxs_1_1client_1_1Context"><span class="std std-ref">Context</span></a> using the current configuration. </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config11addressListE">
+<span id="_CPPv3N4pvxs6client6Config11addressListE"></span><span id="_CPPv2N4pvxs6client6Config11addressListE"></span><span id="pvxs::client::Config::addressList__std::vector:ss:"></span><span class="target" id="structpvxs_1_1client_1_1Config_1af8dc141fb5401ed188403cd104a28212"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">addressList</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config11addressListE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>List of unicast, multicast, and broadcast addresses to which search requests will be sent.</p>
+<p>Entries may take the forms:<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ipaddr&gt;[:&lt;port#&gt;]</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;ipmultiaddr&gt;[:&lt;port&gt;][,&lt;ttl&gt;][&#64;&lt;ifaceaddr&gt;]</span></code> </p></li>
+</ul>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config10interfacesE">
+<span id="_CPPv3N4pvxs6client6Config10interfacesE"></span><span id="_CPPv2N4pvxs6client6Config10interfacesE"></span><span id="pvxs::client::Config::interfaces__std::vector:ss:"></span><span class="target" id="structpvxs_1_1client_1_1Config_1ad630d95ddf5da872b21842023504ddff"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">interfaces</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config10interfacesE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>List of local interface addresses on which beacons may be received. Also constrains autoAddrList to only consider broadcast addresses of listed interfaces. Empty implies wildcard 0.0.0.0 </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config11nameServersE">
+<span id="_CPPv3N4pvxs6client6Config11nameServersE"></span><span id="_CPPv2N4pvxs6client6Config11nameServersE"></span><span id="pvxs::client::Config::nameServers__std::vector:ss:"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a0a750bfc5188208a46d0fd80ff46583e"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nameServers</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config11nameServersE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>List of TCP name servers. Client context will maintain connections, and send search requests, to these servers. <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config8udp_portE">
+<span id="_CPPv3N4pvxs6client6Config8udp_portE"></span><span id="_CPPv2N4pvxs6client6Config8udp_portE"></span><span id="pvxs::client::Config::udp_port__unsigned-short"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a3ca8d0b6c545e2340cca89e82a8984bf"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">short</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">udp_port</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">5076</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config8udp_portE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>UDP port to bind. Default is 5076. May be zero, cf. Server::config() to find allocated port. </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config8tcp_portE">
+<span id="_CPPv3N4pvxs6client6Config8tcp_portE"></span><span id="_CPPv2N4pvxs6client6Config8tcp_portE"></span><span id="pvxs::client::Config::tcp_port__unsigned-short"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a4281f85d0e9773e77959e9e344caf1aa"></span><span class="kt"><span class="pre">unsigned</span></span><span class="w"> </span><span class="kt"><span class="pre">short</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tcp_port</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">5075</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config8tcp_portE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Default TCP port for name servers <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config12autoAddrListE">
+<span id="_CPPv3N4pvxs6client6Config12autoAddrListE"></span><span id="_CPPv2N4pvxs6client6Config12autoAddrListE"></span><span id="pvxs::client::Config::autoAddrList__b"></span><span class="target" id="structpvxs_1_1client_1_1Config_1ae60a88a5dc77f39cc3be30ab5e9cb4ee"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">autoAddrList</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">true</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config12autoAddrListE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Whether to extend the addressList with local interface broadcast addresses. (recommended) </p>
+</dd></dl>
+
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config10tcpTimeoutE">
+<span id="_CPPv3N4pvxs6client6Config10tcpTimeoutE"></span><span id="_CPPv2N4pvxs6client6Config10tcpTimeoutE"></span><span id="pvxs::client::Config::tcpTimeout__double"></span><span class="target" id="structpvxs_1_1client_1_1Config_1a532c9163918e6cdd82889c9aa1f6bb55"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">tcpTimeout</span></span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">40.0</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config10tcpTimeoutE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Inactivity timeout interval for TCP connections. (seconds) <dl class="simple">
+<dt><strong>Since</strong></dt><dd><p>0.2.0 </p>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-static-functions">Public Static Functions</p>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client6Config7fromEnvEv">
+<span id="_CPPv3N4pvxs6client6Config7fromEnvEv"></span><span id="_CPPv2N4pvxs6client6Config7fromEnvEv"></span><span id="pvxs::client::Config::fromEnv"></span><span class="target" id="structpvxs_1_1client_1_1Config_1af0a5303a635abe1039dc80521473d0fc"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">inline</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4N4pvxs6client6ConfigE" title="pvxs::client::Config"><span class="n"><span class="pre">Config</span></span></a><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">fromEnv</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6client6Config7fromEnvEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Default configuration using process environment. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client9ConnectedE">
+<span id="_CPPv3N4pvxs6client9ConnectedE"></span><span id="_CPPv2N4pvxs6client9ConnectedE"></span><span id="pvxs::client::Connected"></span><span class="target" id="structpvxs_1_1client_1_1Connected"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Connected</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">runtime_error</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client9ConnectedE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>For monitor only. <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription"><span class="std std-ref">Subscription</span></a> has (re)connected. </p>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10DisconnectE">
+<span id="_CPPv3N4pvxs6client10DisconnectE"></span><span id="_CPPv2N4pvxs6client10DisconnectE"></span><span id="pvxs::client::Disconnect"></span><span class="target" id="structpvxs_1_1client_1_1Disconnect"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Disconnect</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">runtime_error</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client10DisconnectE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#structpvxs_1_1client_1_1Operation"><span class="std std-ref">Operation</span></a> failed because of connection to server was lost. </p>
+<p>Subclassed by <a class="reference internal" href="#structpvxs_1_1client_1_1Finished"><span class="std std-ref">pvxs::client::Finished</span></a></p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric" id="breathe-section-title-public-members">Public Members</p>
+<dl class="cpp var">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client10Disconnect4timeE">
+<span id="_CPPv3N4pvxs6client10Disconnect4timeE"></span><span id="_CPPv2N4pvxs6client10Disconnect4timeE"></span><span id="pvxs::client::Disconnect::time__epicsTimeC"></span><span class="target" id="structpvxs_1_1client_1_1Disconnect_1a606a6d02fcf57b5c2e09c9dbcf4ba21b"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">epicsTime</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">time</span></span></span><a class="headerlink" href="#_CPPv4N4pvxs6client10Disconnect4timeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>When loss of connection was noticed (when timeout expires). </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client8FinishedE">
+<span id="_CPPv3N4pvxs6client8FinishedE"></span><span id="_CPPv2N4pvxs6client8FinishedE"></span><span id="pvxs::client::Finished"></span><span class="target" id="structpvxs_1_1client_1_1Finished"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">Finished</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">pvxs</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">client</span></span><span class="p"><span class="pre">::</span></span><a class="reference internal" href="#_CPPv4N4pvxs6client10DisconnectE" title="pvxs::client::Disconnect"><span class="n"><span class="pre">Disconnect</span></span></a><a class="headerlink" href="#_CPPv4N4pvxs6client8FinishedE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>For monitor only. <a class="reference internal" href="#structpvxs_1_1client_1_1Subscription"><span class="std std-ref">Subscription</span></a> has completed normally and no more events will ever be received. </p>
+</dd></dl>
+
+<dl class="cpp struct">
+<dt class="sig sig-object cpp" id="_CPPv4N4pvxs6client11RemoteErrorE">
+<span id="_CPPv3N4pvxs6client11RemoteErrorE"></span><span id="_CPPv2N4pvxs6client11RemoteErrorE"></span><span id="pvxs::client::RemoteError"></span><span class="target" id="structpvxs_1_1client_1_1RemoteError"></span><span class="k"><span class="pre">struct</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">RemoteError</span></span></span><span class="w"> </span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="k"><span class="pre">public</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">runtime_error</span></span><a class="headerlink" href="#_CPPv4N4pvxs6client11RemoteErrorE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Error condition signaled by server. </p>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="netconfig.html">PVA Network Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Client API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#making-requests">Making Requests</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#get-info">Get/Info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#put">Put</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rpc">RPC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#operation-and-result">Operation and Result</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitor">Monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#connect">Connect</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#threading">Threading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ownership">Ownership</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pvrequest">pvRequest</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#syntax">Syntax</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#misc">Misc</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html">IOC Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ioc.html#qsrv-2">QSRV 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="typedef.html" title="previous chapter">Defining Custom Types</a></li>
+      <li>Next: <a href="server.html" title="next chapter">Server API</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2024 Michael Davidsaver and Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/client.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
