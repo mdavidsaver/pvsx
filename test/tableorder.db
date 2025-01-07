@@ -1,0 +1,36 @@
+record(aai, "$(N)LabelsOrder_"){
+	field(FTVL, STRING)
+	field(NELM, 2)
+	field(INP, {const:["Label $(VALA)", "Label $(VALB)"]})
+	info(Q:group, {
+		"$(N)TblOrder:$(VALA)-$(VALB)": {
+			+id: "epics:nt/NTTable:1.0",
+			labels: {+type: "plain", +channel: "VAL"},
+		}
+	})
+}
+
+record(aai, "$(N)DataFirst$(VALA)"){
+	field(NELM, 2)
+	field(FTVL, LONG)
+	field(INP, {const:[0]})
+	info(Q:group, {
+		"$(N)TblOrder:$(VALA)-$(VALB)": {
+			"value.$(VALA)": {+type: "plain", +channel: "VAL"}
+		}
+	})
+	field(PINI, YES)
+}
+
+record(aai, "$(N)DataSecond$(VALB)"){
+	field(NELM, 2)
+	field(FTVL, LONG)
+	field(INP, {const:[1]})
+	info(Q:group, {
+		"$(N)TblOrder:$(VALA)-$(VALB)": {
+			"":{+type:"meta", +channel:"VAL"},
+			"value.$(VALB)": {+type: "plain", +channel: "VAL"}
+		}
+	})
+	field(PINI, YES)
+}
