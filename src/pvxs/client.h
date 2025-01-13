@@ -29,6 +29,12 @@ namespace client {
 class Context;
 struct Config;
 
+//! Identity of a server.
+//!
+//! See pvxs::PeerCredentials
+//! @since UNRELEASED
+typedef PeerCredentials ServerCredentials;
+
 //! Operation failed because of connection to server was lost
 struct PVXS_API Disconnect : public std::runtime_error
 {
@@ -54,14 +60,25 @@ struct PVXS_API Finished : public Disconnect
     virtual ~Finished();
 };
 
-//! For monitor only.  Subscription has (re)connected.
+//! Indication of connection to a server
 struct PVXS_API Connected : public std::runtime_error
 {
-    Connected(const std::string& peerName);
+    Connected(const std::string& peerName,
+              const epicsTime& time,
+              const std::shared_ptr<const ServerCredentials>& cred);
+    Connected(const std::string& peerName,
+              const std::shared_ptr<const ServerCredentials>& cred)
+        :Connected(peerName, epicsTime::getCurrent(), cred) // legacy
+    {}
     virtual ~Connected();
 
+    //! Server IP address
     const std::string peerName;
+    //! Local time of connection
     const epicsTime time;
+    //! Identity of server.
+    //! @since UNRELEASED
+    const std::shared_ptr<const ServerCredentials> cred;
 };
 
 struct PVXS_API Interrupted : public std::runtime_error
@@ -309,7 +326,17 @@ public:
     static
     Context fromEnv();
 
+    /** Apply (in part) updated configuration
+     *
+     * Currently, only updates TLS configuration.  Causes all in-progress
+     * Operations to be disconnected.
+     *
+     * @since UNRELEASED
+     */
+    void reconfigure(const Config&);
+
     //! effective config of running client
+    //! @since UNRELEASED Reference invalidated by a call to reconfigure()
     const Config& config() const;
 
     /** Force close the client.
@@ -920,7 +947,7 @@ class ConnectBuilder
     std::shared_ptr<Context::Pvt> ctx;
     std::string _pvname;
     std::string _server;
-    std::function<void()> _onConn;
+    std::function<void(const Connected&)> _onConn;
     std::function<void()> _onDis;
     bool _syncCancel = true;
 public:
@@ -931,7 +958,16 @@ public:
     {}
 
     //! Handler to be invoked when channel becomes connected.
-    ConnectBuilder& onConnect(std::function<void()>&& cb) { _onConn = std::move(cb); return *this; }
+    //! @since UNRELEASED
+    ConnectBuilder& onConnect(std::function<void(const Connected&)>&& cb)
+    { _onConn = std::move(cb); return *this; }
+    //! Handler to be invoked when channel becomes connected.
+    //! @since UNRELEASED Prefer void(const Connected&) in new code.
+    ConnectBuilder& onConnect(std::function<void()>&& cb)
+    {
+        _onConn = [cb](const Connected&) { cb(); };
+        return *this;
+    }
     //! Handler to be invoked when channel becomes disconnected.
     ConnectBuilder& onDisconnect(std::function<void()>&& cb) { _onDis = std::move(cb); return *this; }
 
@@ -1002,7 +1038,7 @@ public:
 };
 DiscoverBuilder Context::discover(std::function<void (const Discovered &)> && fn) { return DiscoverBuilder(pvt, std::move(fn)); }
 
-struct PVXS_API Config {
+struct PVXS_API Config : public impl::ConfigCommon {
     /** List of unicast, multicast, and broadcast addresses to which search requests will be sent.
      *
      * Entries may take the forms:
@@ -1021,18 +1057,8 @@ struct PVXS_API Config {
     //! @since 0.2.0
     std::vector<std::string> nameServers;
 
-    //! UDP port to bind.  Default is 5076.  May be zero, cf. Server::config() to find allocated port.
-    unsigned short udp_port = 5076;
-    //! Default TCP port for name servers
-    //! @since 0.2.0
-    unsigned short tcp_port = 5075;
-
     //! Whether to extend the addressList with local interface broadcast addresses.  (recommended)
     bool autoAddrList = true;
-
-    //! Inactivity timeout interval for TCP connections.  (seconds)
-    //! @since 0.2.0
-    double tcpTimeout = 40.0;
 
 private:
     bool BE = EPICS_BYTE_ORDER==EPICS_ENDIAN_BIG;

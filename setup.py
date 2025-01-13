@@ -138,13 +138,20 @@ class Expand(Command):
             'EVENT__HAVE_MBEDTLS':None,
         }
 
+        probe = ProbeToolchain()
+
+        with open('configure/probe-openssl.c', 'r') as F:
+            if probe.try_compile(F.read()):
+                DEFS['EVENT__HAVE_OPENSSL'] = '1'
+                log.info('Enable OpenSSL Support')
+            else:
+                log.info('No OpenSSL Support')
+
         DEFS.update(pvxsversion) # PVXS_*_VERSION
         DEFS.update(eventversion) # EVENT*VERSION
 
         for var in ('EPICS_HOST_ARCH', 'T_A', 'OS_CLASS', 'CMPLR_CLASS'):
             DEFS[var] = get_config_var(var)
-
-        probe = ProbeToolchain()
 
         if probe.check_symbol('__GNU_LIBRARY__', headers=['features.h']):
             DEFS['_GNU_SOURCE'] = '1'
@@ -240,6 +247,7 @@ class Expand(Command):
                 'mmap64',
                 'pipe',
                 'pipe2',
+                'pread',
                 'poll',
                 'port_create',
                 'sendfile',
@@ -521,6 +529,11 @@ def define_DSOS(self):
     elif DEFS['EVENT__HAVE_SELECT']=='1':
         src_core += ['select.c']
 
+    pvxs_tls_macros = []
+    if DEFS['EVENT__HAVE_OPENSSL']=='1':
+        src_core += ['bufferevent_openssl.c', 'bufferevent_ssl.c']
+        pvxs_tls_macros += [('PVXS_ENABLE_OPENSSL', None)]
+
     src_core = [os.path.join('bundle', 'libevent', src) for src in src_core]
 
     src_pvxs = [
@@ -564,10 +577,15 @@ def define_DSOS(self):
         src_pvxs += ['src/os/WIN32/osdSockExt.cpp']
     else:
         src_pvxs += ['src/os/default/osdSockExt.cpp']
+    if DEFS['EVENT__HAVE_OPENSSL']=='1':
+        src_pvxs += ['src/ossl.cpp']
 
     event_libs = []
     if OS_CLASS=='WIN32':
         event_libs = ['ws2_32','shell32','advapi32','bcrypt','iphlpapi']
+
+    if DEFS['EVENT__HAVE_OPENSSL']=='1':
+        event_libs += ['ssl', 'crypto']
 
     src_pvxsIoc = [
         "ioc/channel.cpp",
@@ -642,7 +660,11 @@ def define_DSOS(self):
             libraries = event_libs,
         ),
         DSO('pvxslibs.lib.pvxs', src_pvxs,
-            define_macros = [('PVXS_API_BUILDING', None), ('PVXS_ENABLE_EXPERT_API', None)] + get_config_var('CPPFLAGS'),
+            define_macros = [
+                ('PVXS_API_BUILDING', None),
+                ('PVXS_ENABLE_EXPERT_API', None),
+                ('PVXS_ENABLE_SSLKEYLOGFILE', None),
+            ] + pvxs_tls_macros + get_config_var('CPPFLAGS'),
             include_dirs=[
                 'bundle/libevent/include',
                 'src',

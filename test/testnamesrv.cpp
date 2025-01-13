@@ -39,7 +39,7 @@ void testNameServer()
 
     auto cliconf(serv.clientConfig());
     for(auto& addr : cliconf.addressList)
-        cliconf.nameServers.push_back(SB()<<addr<<':'<<cliconf.tcp_port);
+        cliconf.nameServers.push_back(SB()<<"pva://"<<addr<<':'<<cliconf.tcp_port<<'/');
     cliconf.autoAddrList = false;
     cliconf.addressList.clear();
 

@@ -25,5 +25,6 @@ include $(TOP)/configure/CONFIG_SITE
 ifdef T_A
  -include $(TOP)/configure/CONFIG_SITE.Common.$(T_A)
  -include $(TOP)/configure/CONFIG_SITE.$(EPICS_HOST_ARCH).$(T_A)
+ -include $(TOP)/configure/O.$(T_A)/TOOLCHAIN
 endif
 

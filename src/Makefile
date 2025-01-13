@@ -3,8 +3,7 @@ TOP=..
 include $(TOP)/configure/CONFIG
 # cfg/ sometimes isn't correctly included due to a Base bug
 # so we do here (maybe again) as workaround
-include $(TOP)/configure/CONFIG_PVXS_MODULE
-include $(TOP)/configure/CONFIG_PVXS_VERSION
+-include $(wildcard $(TOP)/cfg/CONFIG*))
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 #=============================
@@ -12,9 +11,19 @@ include $(TOP)/configure/CONFIG_PVXS_VERSION
 USR_CPPFLAGS += -DPVXS_API_BUILDING
 USR_CPPFLAGS += -DPVXS_ENABLE_EXPERT_API
 
+ifeq (YES,$(EVENT2_HAS_OPENSSL))
+USR_CPPFLAGS += -DPVXS_ENABLE_OPENSSL
+endif
+
+# set to NO to disable handling of $SSLKEYLOGFILE
+PVXS_ENABLE_SSLKEYLOGFILE ?= YES
+
+PVXS_ENABLE_SSLKEYLOGFILE_YES = -DPVXS_ENABLE_SSLKEYLOGFILE
+USR_CPPFLAGS += $(PVXS_ENABLE_SSLKEYLOGFILE_$(PVXS_ENABLE_SSLKEYLOGFILE))
+
 ifdef T_A
 ifneq ($(CONFIG_LOADED),YES)
-$(error Toolchain inspection failed $(MAKEFILE_LIST))
+$(warning Toolchain inspection failed $(MAKEFILE_LIST))
 endif
 endif
 
@@ -30,10 +39,6 @@ endif
 # fault on any undefined symbols (eg. from missing LIB_SYS_LIBS)
 # breaks on older ncurses (circa RHEL6) not using the INPUT() trick to pull in libtinfo.so
 #USR_LDFLAGS_Linux += -Wl,--no-undefined -Wl,--no-allow-shlib-undefined
-
-ifeq (,$(PVXS_MAJOR_VERSION))
-$(error PVXS_MAJOR_VERSION undefined, problem reading cfg/CONFIG_PVXS_VERSION)
-endif
 
 # see below for special case versionNum.h
 EXPAND += describe.h
@@ -108,10 +113,14 @@ LIB_SRCS += clientget.cpp
 LIB_SRCS += clientmon.cpp
 LIB_SRCS += clientdiscover.cpp
 
+ifeq (YES,$(EVENT2_HAS_OPENSSL))
+LIB_SRCS += ossl.cpp
+endif
+
 LIB_LIBS += Com
 
 # special case matching configure/RULES_PVXS_MODULE
-ifeq (,$(LIBEVENT))
+ifeq (,$(LIBEVENT_PREFIX))
 LIB_SYS_LIBS += $(LIBEVENT_BUNDLE_LIBS)
 else
 LIB_LIBS += $(LIBEVENT_BUNDLE_LIBS)
@@ -122,7 +131,7 @@ LIB_SYS_LIBS += $(LIBEVENT_SYS_LIBS)
 #===========================
 
 include $(TOP)/configure/RULES
-include $(TOP)/configure/RULES_PVXS_MODULE
+-include $(wildcard $(TOP)/cfg/RULES*))
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 

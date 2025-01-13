@@ -158,8 +158,10 @@ jobs:
     - name: "apt-get install"
       run: |
         sudo apt-get update
-        sudo apt-get -y install libreadline-dev g++-mingw-w64-x86-64 cmake gdb qemu-system-x86
+        sudo apt-get -y install libreadline-dev g++-mingw-w64-x86-64 cmake gdb qemu-system-x86 libssl-dev
       if: runner.os == 'Linux'
+    - name: Host Info
+      run: openssl version -a
     - name: Automatic core dumper analysis
       uses: mdavidsaver/ci-core-dumper@master
     - name: Prepare and compile dependencies

@@ -1,5 +1,7 @@
 TOP=..
 
+_PVXS_BOOTSTRAP = YES
+
 include $(TOP)/configure/CONFIG
 
 CMAKE ?= cmake
@@ -21,7 +23,6 @@ LIBEVENT_$(T_A) = $(INSTALL_LOCATION)/bundle/usr/$(T_A)
 CMAKEFLAGS += -DCMAKE_INSTALL_PREFIX:PATH="$(abspath $(LIBEVENT_$(T_A)))"
 
 # not needed, and may not be available on embedded targets, so never try
-CMAKEFLAGS += -DEVENT__DISABLE_OPENSSL=ON
 CMAKEFLAGS += -DEVENT__DISABLE_MBEDTLS=ON
 
 # not run, so why bother?

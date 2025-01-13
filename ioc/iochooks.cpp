@@ -303,6 +303,20 @@ void pvxrefdiff() {
     }
 }
 
+void pvxreconfigure()
+{
+    Guard (pvxServer->lock);
+    auto& srv = pvxServer->srv;
+
+    if (srv) {
+        printf("Reconfiguring QSRV\n");
+        srv.reconfigure(server::Config::from_env());
+        pvxsr(0); // print new configuration
+    } else {
+        fprintf(stderr, "Warning: QSRV not running\n");
+    }
+}
+
 } // namespace
 
 static
@@ -468,6 +482,9 @@ void pvxsBaseRegistrar() noexcept {
                        "Save the current set of instance counters for reference by later pvxrefdiff.\n").implementation<&pvxrefsave>();
         IOCShCommand<>("pvxrefdiff",
                        "Show different of current instance counts with those when pvxrefsave was called.\n").implementation<&pvxrefdiff>();
+        IOCShCommand<>("pvxreconfigure",
+                       "Reconfigure QSRV using current values of EPICS_PVA*.  Only disconnects TLS clients\n")
+                .implementation<&pvxreconfigure>();
 
         // Initialise the PVXS Server
         initialisePvxsServer();
