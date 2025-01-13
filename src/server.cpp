@@ -612,7 +612,7 @@ Server::Pvt::Pvt(const Config &conf)
 #endif
 
         for(const auto& addr : effective.beaconDestinations) {
-            beaconDest.emplace_back(addr.c_str(), &effective);
+            beaconDest.emplace_back(addr.c_str(), nullptr, effective.udp_port);
             log_debug_printf(serversetup, "Will send beacons to %s\n",
                              std::string(SB()<<beaconDest.back()).c_str());
         }
